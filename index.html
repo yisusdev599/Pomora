@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pomora</title>
+
+    <!-- Favicon -->
+    
+    <link rel="icon" type="image/png" href="logo-icon-transparente.png">
+
+    <!-- Fuente -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <main class="app">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                <img src="logo-icon.png" alt="Logo Pomora" class="logo-img">
+                <h1 class="logo-text">Pomora</h1>
+            </div>
+        </header>
+
+        <!-- SELECTOR DE MODO -->
+        <nav class="mode-selector">
+            <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+            <button class="mode-btn" data-mode="short">Short Break</button>
+            <button class="mode-btn" data-mode="long">Long Break</button>
+        </nav>
+
+        <!-- TIMER -->
+        <section class="timer-section">
+            <div class="progress-ring">
+                <svg width="220" height="220">
+                    <circle class="ring-bg" cx="110" cy="110" r="100" />
+                    <circle class="ring-progress" cx="110" cy="110" r="100" />
+                </svg>
+
+                <div class="time-text">
+                    <span id="minutes">25</span>:<span id="seconds">00</span>
+                </div>
+            </div>
+
+            <p class="mode-text" id="modeText">Tiempo de enfoque</p>
+        </section>
+
+        <!-- CONTROLES -->
+        <section class="controls">
+            <button id="startBtn" class="primary-btn">▶ Start Session</button>
+            <button id="resetBtn" class="secondary-btn">⟳</button>
+        </section>
+
+        <!-- DAILY PROGRESS -->
+        <section class="daily-progress">
+            <div class="daily-header">
+                <span class="daily-title">Daily Progress</span>
+                <span id="dailyPercent">0%</span>
+            </div>
+
+            <div class="daily-bar">
+                <div class="daily-fill"></div>
+            </div>
+        </section>
+
+        <!-- FRASE -->
+        <footer class="quote">
+            <p>“Un enfoque a la vez.”</p>
+        </footer>
+
+        <!-- BOTONES INFERIORES -->
+        <nav class="botton-actions">
+
+            <button class="icon-btn" id="statsBtn" title="Estadísticas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M9 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M15 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                    <path d="M4 20h14" />
+                </svg>
+            </button>
+
+            <button class="icon-btn" id="taskBtn" title="Tareas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" />
+                    <path d="M14 19l2 2l4 -4" />
+                    <path d="M9 8h4" />
+                    <path d="M9 12h2" />
+                </svg>
+            </button>
+
+            <button id="soundBtn" class="icon-btn" title="Sonido">
+                <svg id="soundIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 5l-5 4H3v6h3l5 4z" />
+                    <path d="M15 9a3 3 0 0 1 0 6" />
+                    <path d="M19 5a7 7 0 0 1 0 14" />
+                </svg>
+            </button>
+
+        </nav>
+
+    </main>
+
+    <!-- DRAWER TAREAS -->
+    <aside class="tasks-drawer" id="tasksDrawer">
+        <div class="drawer-header">
+            <h3>Mis Tareas</h3>
+            <button id="closeTasks">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M18 6l-12 12" />
+                    <path d="M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="Nueva tarea..." />
+            <button id="addTask">Agregar</button>
+        </div>
+
+        <p class="tasks-counter">
+            Completadas: <span id="completedCount">0</span>
+        </p>
+
+        <ul id="tasksList"></ul>
+    </aside>
+
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
