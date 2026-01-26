@@ -622,3 +622,32 @@ text-align: center;
   }
 }
 
+/* 📱 AJUSTES PARA MÓVILES */
+@media (max-width: 480px) {
+
+  .timer-section {
+    margin-top: -20px; /* sube todo el bloque */
+  }
+
+  .progress-ring {
+    width: 180px;
+    height: 180px;
+  }
+
+  .progress-ring svg {
+    width: 180px;
+    height: 180px;
+  }
+
+  .time-text {
+    font-size: 2.2rem;
+  }
+
+  .mode-text {
+    margin-top: 8px;
+    font-size: 0.9rem;
+  }
+}
+
+
+
