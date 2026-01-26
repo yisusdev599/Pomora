@@ -521,3 +521,104 @@ text-align: center;
   opacity: 0;
   transform: translateX(20px);
 }
+/* =========================
+   📱 RESPONSIVE MOBILE
+========================= */
+@media (max-width: 480px) {
+
+  body {
+    height: auto;
+  }
+
+  .app {
+    padding: 20px 16px;
+    gap: 24px;
+  }
+
+  /* Logo */
+  .logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+  }
+
+  /* Selector de modo */
+  .mode-selector {
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .mode-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  /* ⏱️ CÍRCULO */
+  .progress-ring {
+    width: 180px;
+    height: 180px;
+  }
+
+  .ring-bg,
+  .ring-progress {
+    cx: 90;
+    cy: 90;
+    r: 80;
+    stroke-width: 10;
+  }
+
+  .time-text {
+    font-size: 2.4rem;
+    letter-spacing: 1px;
+  }
+
+  /* Controles */
+  .controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .controls button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+
+  /* Progreso diario */
+  .daily-progress {
+    padding: 16px;
+    max-width: 100%;
+  }
+
+  .daily-header {
+    font-size: 0.8rem;
+  }
+
+  .daily-bar {
+    height: 12px;
+  }
+
+  /* Botones inferiores */
+  .bottom-actions {
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .icon-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Drawer tareas */
+  .tasks-drawer {
+    width: 100%;
+    right: -100%;
+  }
+
+  .tasks-drawer.open {
+    right: 0;
+  }
+}
+
