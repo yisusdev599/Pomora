@@ -36,16 +36,15 @@ body {
 }
 
 /* =========================
-   APP
+   APP CONTENEDOR
 ========================= */
 .app {
   width: 100%;
-  max-width: 480px;
   min-height: 100vh;
-  padding: 24px 20px;
+  padding: 32px 48px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   text-align: center;
 }
 
@@ -54,18 +53,18 @@ body {
 ========================= */
 .logo {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 8px;
 }
 
 .logo-img {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
 }
 
 .logo-text {
-  font-size: 1.4rem;
+  font-size: 1.55rem;
   font-weight: 600;
 }
 
@@ -79,14 +78,15 @@ body {
   background: #f3efe8;
   padding: 6px;
   border-radius: 16px;
+  margin: 0 auto;
 }
 
 .mode-btn {
-  padding: 6px 14px;
+  padding: 8px 18px;
   border-radius: 14px;
   border: none;
   background: transparent;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
@@ -105,21 +105,22 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mode-text {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
 /* =========================
-   PROGRESS RING (FIX)
+   PROGRESS RING
 ========================= */
 .progress-ring {
   position: relative;
   width: 220px;
   height: 220px;
+  margin: 0 auto;
 }
 
 .progress-ring svg {
@@ -151,24 +152,25 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 600;
   letter-spacing: 2px;
 }
 
 /* =========================
-   CONTROLS
+   CONTROLES
 ========================= */
 .controls {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .controls button {
   padding: 10px 18px;
   border-radius: 12px;
   border: none;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -186,8 +188,11 @@ body {
    DAILY PROGRESS
 ========================= */
 .daily-progress {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
   background: #fff;
-  padding: 16px;
+  padding: 18px 24px;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,.06);
 }
@@ -195,14 +200,14 @@ body {
 .daily-header {
   display: flex;
   justify-content: space-between;
-  font-size: .8rem;
-  margin-bottom: 10px;
+  font-size: .85rem;
+  margin-bottom: 12px;
 }
 
 .daily-bar {
-  height: 12px;
+  height: 14px;
   background: #e0e0e0;
-  border-radius: 6px;
+  border-radius: 7px;
   overflow: hidden;
 }
 
@@ -219,15 +224,22 @@ body {
 .bottom-actions {
   display: flex;
   justify-content: center;
-  gap: 18px;
+  gap: 20px;
   margin-top: auto;
 }
 
 .icon-btn {
   background: none;
   border: none;
+  padding: 10px;
+  border-radius: 12px;
   cursor: pointer;
   color: var(--text-muted);
+  transition: .2s;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
 }
 
 .icon-btn.active {
@@ -241,11 +253,11 @@ body {
 .tasks-drawer {
   position: fixed;
   top: 0;
-  right: -100%;
-  width: 100%;
+  right: -340px;
+  width: 340px;
   height: 100vh;
   background: #fff;
-  padding: 20px;
+  padding: 24px;
   transition: right .35s ease;
   z-index: 1000;
 }
@@ -268,9 +280,27 @@ body {
 }
 
 /* =========================
-   MOBILE
+   📱 MOBILE
 ========================= */
 @media (max-width: 480px) {
+
+  .app {
+    padding: 20px 16px;
+  }
+
+  .logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-text {
+    font-size: 1.3rem;
+  }
+
+  .mode-btn {
+    padding: 6px 12px;
+    font-size: .75rem;
+  }
 
   .progress-ring {
     width: 180px;
@@ -280,7 +310,21 @@ body {
   .time-text {
     font-size: 2.4rem;
   }
+
+  .daily-progress {
+    padding: 16px;
+  }
+
+  .tasks-drawer {
+    width: 100%;
+    right: -100%;
+  }
+
+  .tasks-drawer.open {
+    right: 0;
+  }
 }
+
 
 
 
