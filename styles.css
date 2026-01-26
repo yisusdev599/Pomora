@@ -1,5 +1,5 @@
 /* =========================
-   VARIABLES DE COLOR
+   🎨 VARIABLES DE COLOR
 ========================= */
 :root {
   --bg-color: #ffffff;
@@ -15,7 +15,7 @@
 }
 
 /* =========================
-   RESET
+   🔄 RESET
 ========================= */
 * {
   margin: 0;
@@ -24,31 +24,33 @@
 }
 
 /* =========================
-   BODY
+   🧍 BODY
 ========================= */
 body {
   font-family: 'Montserrat', sans-serif;
   background-color: var(--bg-color);
   color: var(--text-main);
   min-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  justify-content: center;
 }
 
 /* =========================
-   APP
+   📦 APP CONTENEDOR
 ========================= */
 .app {
+  width: 100%;
+  max-width: 520px;
   min-height: 100vh;
   padding: 32px 48px;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  overflow-y: auto;
   text-align: center;
 }
 
 /* =========================
-   LOGO
+   🧠 HEADER / LOGO
 ========================= */
 .logo {
   display: flex;
@@ -68,15 +70,15 @@ body {
 }
 
 /* =========================
-   MODE SELECTOR
+   🔘 MODE SELECTOR
 ========================= */
 .mode-selector {
   display: flex;
+  justify-content: center;
   gap: 6px;
-  background: #f3efe8;
+  background-color: #f3efe8;
   padding: 6px;
   border-radius: 16px;
-  margin: 0 auto;
 }
 
 .mode-btn {
@@ -84,20 +86,21 @@ body {
   border-radius: 14px;
   border: none;
   background: transparent;
+  color: var(--text-muted);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  color: var(--text-muted);
+  transition: 0.25s;
 }
 
 .mode-btn.active {
-  background: #fff;
+  background: var(--white);
   color: var(--text-main);
-  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 /* =========================
-   PROGRESS RING
+   ⏱️ PROGRESS RING
 ========================= */
 .progress-ring {
   position: relative;
@@ -110,19 +113,24 @@ body {
   transform: rotate(-90deg);
 }
 
-.ring-bg {
+.ring-bg,
+.ring-progress {
   fill: none;
-  stroke: #e6e6e6;
   stroke-width: 12;
+  cx: 110;
+  cy: 110;
+  r: 100;
+}
+
+.ring-bg {
+  stroke: #e6e6e6;
 }
 
 .ring-progress {
-  fill: none;
   stroke: var(--primary);
-  stroke-width: 10;
   stroke-linecap: round;
   stroke-dasharray: 628;
-  transition: stroke .3s;
+  transition: stroke 0.3s ease;
 }
 
 .time-text {
@@ -133,29 +141,30 @@ body {
   justify-content: center;
   font-size: 3.2rem;
   font-weight: 600;
+  letter-spacing: 2px;
 }
 
 /* =========================
-   CONTROLS
+   ▶️ CONTROLES
 ========================= */
 .controls {
   display: flex;
   justify-content: center;
   gap: 14px;
-  flex-wrap: wrap;
 }
 
 .controls button {
   padding: 10px 18px;
   border-radius: 10px;
   border: none;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .primary-btn {
   background: var(--primary);
-  color: #fff;
+  color: white;
 }
 
 .primary-btn:hover {
@@ -168,20 +177,20 @@ body {
 }
 
 /* =========================
-   DAILY PROGRESS
+   📊 DAILY PROGRESS
 ========================= */
 .daily-progress {
-  max-width: 420px;
-  margin: 0 auto;
+  width: 100%;
+  background: var(--bg-color);
   padding: 18px 24px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .daily-header {
   display: flex;
   justify-content: space-between;
-  font-size: .85rem;
+  font-size: 0.85rem;
   margin-bottom: 12px;
 }
 
@@ -194,31 +203,13 @@ body {
 
 .daily-fill {
   height: 100%;
-  background: var(--primary);
   width: 0%;
-  transition: width .4s;
+  background: var(--primary);
+  transition: width 0.4s ease;
 }
 
 /* =========================
-   NOTES (NO SE ROMPEN)
-========================= */
-.notes-section {
-  margin-top: 16px;
-  padding-bottom: 24px;
-}
-
-.notes-section textarea {
-  width: 100%;
-  min-height: 110px;
-  resize: vertical;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  font-family: inherit;
-}
-
-/* =========================
-   BOTTOM ACTIONS
+   🔊 BOTTOM ACTIONS
 ========================= */
 .bottom-actions {
   display: flex;
@@ -231,8 +222,7 @@ body {
   border: none;
   cursor: pointer;
   color: #bbb;
-  padding: 10px;
-  border-radius: 12px;
+  transition: 0.2s;
 }
 
 .icon-btn.active {
@@ -245,7 +235,7 @@ body {
 }
 
 /* =========================
-   TASK DRAWER
+   📋 TASK DRAWER
 ========================= */
 .tasks-drawer {
   position: fixed;
@@ -253,40 +243,32 @@ body {
   right: -340px;
   width: 340px;
   height: 100vh;
-  background: #fff;
+  background: white;
   padding: 24px;
-  transition: right .35s ease;
+  transition: 0.35s;
   z-index: 1001;
-  display: flex;
-  flex-direction: column;
 }
 
 .tasks-drawer.open {
   right: 0;
 }
 
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.2);
-  opacity: 0;
-  pointer-events: none;
-  transition: .3s;
-}
-
-.drawer-overlay.show {
-  opacity: 1;
-  pointer-events: all;
-}
-
 /* =========================
-   MOBILE
+   📱 MOBILE FIXES
 ========================= */
 @media (max-width: 480px) {
 
+  body {
+    align-items: flex-start;
+  }
+
   .app {
     padding: 20px 16px;
-    gap: 24px;
+    gap: 20px;
+  }
+
+  .logo-text {
+    font-size: 1.2rem;
   }
 
   .progress-ring {
@@ -294,8 +276,24 @@ body {
     height: 180px;
   }
 
+  .ring-bg,
+  .ring-progress {
+    cx: 90;
+    cy: 90;
+    r: 80;
+  }
+
   .time-text {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
+  }
+
+  .daily-progress {
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .bottom-actions {
+    margin-bottom: 12px;
   }
 
   .tasks-drawer {
