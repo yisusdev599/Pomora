@@ -133,7 +133,7 @@ function setMode(mode) {
         modeText.textContent = "Tiempo de enfoque";
     }
     if (mode === "short") {
-        totalTime = 1 * 60;
+        totalTime = 5 * 60;
         modeText.textContent = "Short Break";
     }
     if (mode === "long") {
@@ -384,5 +384,6 @@ function renderTasks() {
 // 🚀 INICIO
 // =========================
 renderTasks();
+
 
 
