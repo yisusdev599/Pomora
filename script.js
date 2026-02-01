@@ -22,11 +22,11 @@ function playUISound(type, action) {
     if (!sound) return;
 
     sound.currentTime = 0;
-    sound.play().catch(() => { });
+    sound.play().catch(() => {});
 }
 
 // =========================
-// 🎵 MÚSICA LOFI
+// 🎵 MÚSICA LOFI (FIX)
 // =========================
 const lofiTracks = [
     "music/lofi2.mp3",
@@ -36,32 +36,39 @@ const lofiTracks = [
     "music/lofi6.mp3",
     "music/lofi7.mp3",
     "music/lofi8.mp3",
-    
 ];
 
 let lofiAudio = new Audio();
 lofiAudio.volume = 0.5;
-lofiAudio.loop = true;
+lofiAudio.preload = "auto";
 
 let lofiEnabled = true;
-let lofiStarted = false;
+let lastTrack = -1;
 
 function playLofi() {
-    if (!lofiEnabled) return;
+    if (!lofiEnabled || !isRunning) return;
 
-    if (!lofiStarted) {
-        const random = Math.floor(Math.random() * lofiTracks.length);
-        lofiAudio.src = lofiTracks[random];
-        lofiStarted = true;
-    }
-    lofiAudio.play().catch(() => { });
+    let random;
+    do {
+        random = Math.floor(Math.random() * lofiTracks.length);
+    } while (random === lastTrack && lofiTracks.length > 1);
+
+    lastTrack = random;
+    lofiAudio.src = lofiTracks[random];
+    lofiAudio.load();
+    lofiAudio.play().catch(() => {});
 }
 
 function stopLofi() {
     lofiAudio.pause();
     lofiAudio.currentTime = 0;
-    lofiStarted = false;
 }
+
+lofiAudio.addEventListener("ended", () => {
+    if (lofiEnabled && isRunning) {
+        playLofi();
+    }
+});
 
 // =========================
 // 🔘 BOTÓN LOFI
@@ -73,7 +80,7 @@ soundBtn?.addEventListener("click", () => {
     lofiEnabled = !lofiEnabled;
 
     if (!lofiEnabled) {
-        lofiAudio.pause();
+        stopLofi();
     } else if (isRunning) {
         playLofi();
     }
@@ -88,7 +95,7 @@ soundBtn?.addEventListener("click", () => {
 });
 
 // =========================
-// 🔁 MAPEO CORRECTO DE MODOS
+// 🔁 MAPEO MODOS
 // =========================
 function getSoundMode(mode) {
     if (mode === "pomodoro") return "pomodoro";
@@ -108,7 +115,7 @@ const ring = document.querySelector(".ring-progress");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
 // =========================
-// ⚙️ VARIABLES
+// ⚙️ VARIABLES TIMER
 // =========================
 const FULL_DASH = 628;
 let timer = null;
@@ -132,7 +139,7 @@ function setMode(mode) {
         modeText.textContent = "Tiempo de enfoque";
     }
     if (mode === "short") {
-        totalTime = 1 * 60;
+        totalTime = 5 * 60;
         modeText.textContent = "Short Break";
     }
     if (mode === "long") {
@@ -147,7 +154,7 @@ function setMode(mode) {
 }
 
 // =========================
-// 🕒 TIMER
+// 🕒 DISPLAY
 // =========================
 function updateDisplay() {
     minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, "0");
@@ -158,10 +165,13 @@ function updateRing() {
     ring.style.strokeDashoffset = FULL_DASH * (1 - timeLeft / totalTime);
 }
 
+// =========================
+// ▶️ TIMER
+// =========================
 function toggleTimer() {
     if (isRunning) {
         clearInterval(timer);
-        lofiAudio.pause();
+        stopLofi();
         isRunning = false;
         startBtn.textContent = "▶ Start Session";
         return;
@@ -174,8 +184,8 @@ function toggleTimer() {
         playUISound(soundMode, "start");
     }
 
-    playLofi();
     isRunning = true;
+    playLofi();
     startBtn.textContent = "⏸ Pause";
 
     timer = setInterval(() => {
@@ -213,7 +223,7 @@ function resetTimer() {
 }
 
 // =========================
-// 🎯 EVENTOS
+// 🎯 EVENTOS TIMER
 // =========================
 startBtn.addEventListener("click", toggleTimer);
 resetBtn.addEventListener("click", resetTimer);
@@ -226,11 +236,9 @@ modeButtons.forEach(btn =>
 // =========================
 setMode("pomodoro");
 
-
 // =========================
 // 📝 DRAWER TAREAS
 // =========================
-
 const taskBtn = document.getElementById("taskBtn");
 const tasksDrawer = document.getElementById("tasksDrawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
@@ -244,145 +252,120 @@ const completedCountEl = document.getElementById("completedCount");
 let tasks = JSON.parse(localStorage.getItem("pomoraTasks")) || [];
 
 // =========================
-// 📂 ABRIR / CERRAR DRAWER
+// 📂 DRAWER
 // =========================
 taskBtn.addEventListener("click", () => {
-  tasksDrawer.classList.add("open");
-  drawerOverlay.classList.add("show");
-  taskInput.focus();
+    tasksDrawer.classList.add("open");
+    drawerOverlay.classList.add("show");
+    taskInput.focus();
 });
 
 function closeDrawer() {
-  tasksDrawer.classList.remove("open");
-  drawerOverlay.classList.remove("show");
+    tasksDrawer.classList.remove("open");
+    drawerOverlay.classList.remove("show");
 }
 
 closeTasks.addEventListener("click", closeDrawer);
 drawerOverlay.addEventListener("click", closeDrawer);
 
 // =========================
-// ➕ AGREGAR TAREA
+// ➕ TAREAS
 // =========================
 addTaskBtn.addEventListener("click", addTask);
 taskInput.addEventListener("keypress", e => {
-  if (e.key === "Enter") addTask();
+    if (e.key === "Enter") addTask();
 });
 
 function addTask() {
-  const text = taskInput.value.trim();
-  if (!text) return;
+    const text = taskInput.value.trim();
+    if (!text) return;
 
-  tasks.push({
-    id: Date.now(),
-    text,
-    completed: false
-  });
+    tasks.push({
+        id: Date.now(),
+        text,
+        completed: false
+    });
 
-  taskInput.value = "";
-  saveTasks();
-  renderTasks();
+    taskInput.value = "";
+    saveTasks();
+    renderTasks();
 }
 
 // =========================
 // 💾 STORAGE
 // =========================
 function saveTasks() {
-  localStorage.setItem("pomoraTasks", JSON.stringify(tasks));
+    localStorage.setItem("pomoraTasks", JSON.stringify(tasks));
 }
 
 function updateCompletedCount() {
-  const completed = tasks.filter(t => t.completed).length;
-  completedCountEl.textContent = completed;
+    completedCountEl.textContent =
+        tasks.filter(t => t.completed).length;
 }
 
 // =========================
 // 🎉 CONFETI
 // =========================
 function launchConfetti() {
-  const colors = ["#facc15", "#4f46e5", "#22c55e", "#ef4444", "#ec4899"];
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+    const colors = ["#facc15", "#4f46e5", "#22c55e", "#ef4444", "#ec4899"];
+    const cx = innerWidth / 2;
+    const cy = innerHeight / 2;
 
-  for (let i = 0; i < 25; i++) {
-    const confetti = document.createElement("div");
-    confetti.className = "confetti";
-
-    confetti.style.background =
-      colors[Math.floor(Math.random() * colors.length)];
-
-    confetti.style.left = centerX + "px";
-    confetti.style.top = centerY + "px";
-
-    confetti.style.setProperty("--x", `${(Math.random() - 0.5) * 300}px`);
-    confetti.style.setProperty("--y", `${Math.random() * 300}px`);
-
-    document.body.appendChild(confetti);
-    setTimeout(() => confetti.remove(), 900);
-  }
+    for (let i = 0; i < 25; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = cx + "px";
+        c.style.top = cy + "px";
+        c.style.setProperty("--x", `${(Math.random() - 0.5) * 300}px`);
+        c.style.setProperty("--y", `${Math.random() * 300}px`);
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 900);
+    }
 }
 
 // =========================
 // 🧾 RENDER TAREAS
 // =========================
 function renderTasks() {
-  tasksList.innerHTML = "";
+    tasksList.innerHTML = "";
 
-  tasks.forEach(task => {
-    const li = document.createElement("li");
-    if (task.completed) li.classList.add("completed");
+    tasks.forEach(task => {
+        const li = document.createElement("li");
+        if (task.completed) li.classList.add("completed");
 
-    li.innerHTML = `
-      <label class="task-label">
-        <input type="checkbox" ${task.completed ? "checked" : ""}>
-        <span>${task.text}</span>
-      </label>
+        li.innerHTML = `
+          <label class="task-label">
+            <input type="checkbox" ${task.completed ? "checked" : ""}>
+            <span>${task.text}</span>
+          </label>
+          <button class="delete">🗑️</button>
+        `;
 
-      <button class="delete">
-        <svg xmlns="http://www.w3.org/2000/svg"
-          width="22" height="22"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="icon icon-tabler icon-tabler-trash">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-          <path d="M20 6H4l1 13a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3l1-13z"/>
-          <path d="M9 4h6v2H9z"/>
-        </svg>
-      </button>
-    `;
+        li.querySelector("input").addEventListener("change", () => {
+            task.completed = !task.completed;
+            saveTasks();
+            renderTasks();
+            if (task.completed) launchConfetti();
+        });
 
-    // ✔️ COMPLETAR
-    li.querySelector("input").addEventListener("change", () => {
-      task.completed = !task.completed;
-      saveTasks();
-      renderTasks();
+        li.querySelector(".delete").addEventListener("click", () => {
+            li.classList.add("removing");
+            setTimeout(() => {
+                tasks = tasks.filter(t => t.id !== task.id);
+                saveTasks();
+                renderTasks();
+            }, 250);
+        });
 
-      if (task.completed) {
-        launchConfetti();
-      }
+        tasksList.appendChild(li);
     });
 
-    // 🗑️ ELIMINAR
-    li.querySelector(".delete").addEventListener("click", () => {
-  li.classList.add("removing");
-
-  setTimeout(() => {
-    tasks = tasks.filter(t => t.id !== task.id);
-    saveTasks();
-    renderTasks();
-  }, 250); // mismo tiempo que la animación
-});
-
-
-    tasksList.appendChild(li);
-  });
-
-  updateCompletedCount();
+    updateCompletedCount();
 }
 
-// =========================
-// 🚀 INICIO
-// =========================
 renderTasks();
+
 
 
 
