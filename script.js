@@ -29,9 +29,17 @@ function playUISound(type, action) {
 // 🎵 MÚSICA LOFI
 // =========================
 const lofiTracks = [
-   
+    "music/lofi1.mp3",
+    "music/lofi2.mp3",
+    "music/lofi3.mp3",
     "music/lofi4.mp3",
+    "music/lofi5.mp3
+    "music/lofi6.mp3",
     "music/lofi7.mp3",
+    "music/lofi8.mp3",
+    "music/lofi9.mp3",
+    "music/lofi10.mp3",
+    
     
 ];
 
@@ -379,6 +387,7 @@ function renderTasks() {
 // 🚀 INICIO
 // =========================
 renderTasks();
+
 
 
 
