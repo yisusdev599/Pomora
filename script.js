@@ -26,7 +26,7 @@ function playUISound(type, action) {
 }
 
 // =========================
-// 🎵 MÚSICA LOFI (FIX FINAL)
+// 🎵 MÚSICA LOFI (FINAL)
 // =========================
 const lofiTracks = [
     "music/lofi2.mp3",
@@ -74,6 +74,7 @@ function stopLofi() {
     lofiAudio.currentTime = 0;
 }
 
+// 🔁 cambiar canción al terminar
 lofiAudio.addEventListener("ended", () => {
     if (lofiEnabled && isRunning && audioUnlocked) {
         loadRandomTrack();
@@ -191,7 +192,9 @@ function toggleTimer() {
     const mode = document.querySelector(".mode-btn.active")?.dataset.mode;
     const soundMode = getSoundMode(mode);
 
-    if (timeLeft === totalTime) {
+    // 🎵 sesión nueva → canción nueva
+    if (timeLeft === totalTime && audioUnlocked) {
+        loadRandomTrack();
         playUISound(soundMode, "start");
     }
 
@@ -228,13 +231,19 @@ function resetTimer() {
     stopLofi();
     isRunning = false;
     timeLeft = totalTime;
+
+    // 🔄 reset = canción nueva
+    if (audioUnlocked) {
+        loadRandomTrack();
+    }
+
     updateDisplay();
     updateRing();
     startBtn.textContent = "▶ Start Session";
 }
 
 // =========================
-// 🎯 EVENTOS TIMER (CLAVE)
+// 🎯 EVENTOS (CLAVE)
 // =========================
 startBtn.addEventListener("click", () => {
     audioUnlocked = true;
@@ -255,12 +264,5 @@ modeButtons.forEach(btn =>
 // 🚀 INICIO
 // =========================
 setMode("pomodoro");
-
-
-
-
-
-
-
 
 
