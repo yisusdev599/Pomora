@@ -26,7 +26,7 @@ function playUISound(type, action) {
 }
 
 // =========================
-// 🎵 MÚSICA LOFI (FIX)
+// 🎵 MÚSICA LOFI (FIX FINAL)
 // =========================
 const lofiTracks = [
     "music/lofi2.mp3",
@@ -43,11 +43,10 @@ lofiAudio.volume = 0.5;
 lofiAudio.preload = "auto";
 
 let lofiEnabled = true;
+let audioUnlocked = false;
 let lastTrack = -1;
 
-function playLofi() {
-    if (!lofiEnabled || !isRunning) return;
-
+function loadRandomTrack() {
     let random;
     do {
         random = Math.floor(Math.random() * lofiTracks.length);
@@ -56,7 +55,18 @@ function playLofi() {
     lastTrack = random;
     lofiAudio.src = lofiTracks[random];
     lofiAudio.load();
-    lofiAudio.play().catch(() => {});
+}
+
+function playLofi() {
+    if (!lofiEnabled || !isRunning || !audioUnlocked) return;
+
+    if (!lofiAudio.src) {
+        loadRandomTrack();
+    }
+
+    if (lofiAudio.paused) {
+        lofiAudio.play().catch(() => {});
+    }
 }
 
 function stopLofi() {
@@ -65,8 +75,9 @@ function stopLofi() {
 }
 
 lofiAudio.addEventListener("ended", () => {
-    if (lofiEnabled && isRunning) {
-        playLofi();
+    if (lofiEnabled && isRunning && audioUnlocked) {
+        loadRandomTrack();
+        lofiAudio.play().catch(() => {});
     }
 });
 
@@ -81,7 +92,7 @@ soundBtn?.addEventListener("click", () => {
 
     if (!lofiEnabled) {
         stopLofi();
-    } else if (isRunning) {
+    } else {
         playLofi();
     }
 
@@ -223,9 +234,18 @@ function resetTimer() {
 }
 
 // =========================
-// 🎯 EVENTOS TIMER
+// 🎯 EVENTOS TIMER (CLAVE)
 // =========================
-startBtn.addEventListener("click", toggleTimer);
+startBtn.addEventListener("click", () => {
+    audioUnlocked = true;
+
+    if (!lofiAudio.src) {
+        loadRandomTrack();
+    }
+
+    toggleTimer();
+});
+
 resetBtn.addEventListener("click", resetTimer);
 modeButtons.forEach(btn =>
     btn.addEventListener("click", () => setMode(btn.dataset.mode))
@@ -236,135 +256,6 @@ modeButtons.forEach(btn =>
 // =========================
 setMode("pomodoro");
 
-// =========================
-// 📝 DRAWER TAREAS
-// =========================
-const taskBtn = document.getElementById("taskBtn");
-const tasksDrawer = document.getElementById("tasksDrawer");
-const drawerOverlay = document.getElementById("drawerOverlay");
-const closeTasks = document.getElementById("closeTasks");
-
-const taskInput = document.getElementById("taskInput");
-const addTaskBtn = document.getElementById("addTask");
-const tasksList = document.getElementById("tasksList");
-const completedCountEl = document.getElementById("completedCount");
-
-let tasks = JSON.parse(localStorage.getItem("pomoraTasks")) || [];
-
-// =========================
-// 📂 DRAWER
-// =========================
-taskBtn.addEventListener("click", () => {
-    tasksDrawer.classList.add("open");
-    drawerOverlay.classList.add("show");
-    taskInput.focus();
-});
-
-function closeDrawer() {
-    tasksDrawer.classList.remove("open");
-    drawerOverlay.classList.remove("show");
-}
-
-closeTasks.addEventListener("click", closeDrawer);
-drawerOverlay.addEventListener("click", closeDrawer);
-
-// =========================
-// ➕ TAREAS
-// =========================
-addTaskBtn.addEventListener("click", addTask);
-taskInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") addTask();
-});
-
-function addTask() {
-    const text = taskInput.value.trim();
-    if (!text) return;
-
-    tasks.push({
-        id: Date.now(),
-        text,
-        completed: false
-    });
-
-    taskInput.value = "";
-    saveTasks();
-    renderTasks();
-}
-
-// =========================
-// 💾 STORAGE
-// =========================
-function saveTasks() {
-    localStorage.setItem("pomoraTasks", JSON.stringify(tasks));
-}
-
-function updateCompletedCount() {
-    completedCountEl.textContent =
-        tasks.filter(t => t.completed).length;
-}
-
-// =========================
-// 🎉 CONFETI
-// =========================
-function launchConfetti() {
-    const colors = ["#facc15", "#4f46e5", "#22c55e", "#ef4444", "#ec4899"];
-    const cx = innerWidth / 2;
-    const cy = innerHeight / 2;
-
-    for (let i = 0; i < 25; i++) {
-        const c = document.createElement("div");
-        c.className = "confetti";
-        c.style.background = colors[Math.floor(Math.random() * colors.length)];
-        c.style.left = cx + "px";
-        c.style.top = cy + "px";
-        c.style.setProperty("--x", `${(Math.random() - 0.5) * 300}px`);
-        c.style.setProperty("--y", `${Math.random() * 300}px`);
-        document.body.appendChild(c);
-        setTimeout(() => c.remove(), 900);
-    }
-}
-
-// =========================
-// 🧾 RENDER TAREAS
-// =========================
-function renderTasks() {
-    tasksList.innerHTML = "";
-
-    tasks.forEach(task => {
-        const li = document.createElement("li");
-        if (task.completed) li.classList.add("completed");
-
-        li.innerHTML = `
-          <label class="task-label">
-            <input type="checkbox" ${task.completed ? "checked" : ""}>
-            <span>${task.text}</span>
-          </label>
-          <button class="delete">🗑️</button>
-        `;
-
-        li.querySelector("input").addEventListener("change", () => {
-            task.completed = !task.completed;
-            saveTasks();
-            renderTasks();
-            if (task.completed) launchConfetti();
-        });
-
-        li.querySelector(".delete").addEventListener("click", () => {
-            li.classList.add("removing");
-            setTimeout(() => {
-                tasks = tasks.filter(t => t.id !== task.id);
-                saveTasks();
-                renderTasks();
-            }, 250);
-        });
-
-        tasksList.appendChild(li);
-    });
-
-    updateCompletedCount();
-}
-
-renderTasks();
 
 
 
