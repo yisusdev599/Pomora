@@ -22,14 +22,13 @@ function playUISound(type, action) {
     if (!sound) return;
 
     sound.currentTime = 0;
-    sound.play().catch(() => {});
+    sound.play().catch(() => { });
 }
 
 // =========================
-// 🎵 MÚSICA LOFI (CORREGIDO)
+// 🎵 MÚSICA LOFI
 // =========================
 const lofiTracks = [
-    "music/lofi1.mp3",
     "music/lofi2.mp3",
     "music/lofi3.mp3",
     "music/lofi4.mp3",
@@ -37,7 +36,7 @@ const lofiTracks = [
     "music/lofi6.mp3",
     "music/lofi7.mp3",
     "music/lofi8.mp3",
-    "music/lofi10.mp3"
+    
 ];
 
 let lofiAudio = new Audio();
@@ -55,7 +54,7 @@ function playLofi() {
         lofiAudio.src = lofiTracks[random];
         lofiStarted = true;
     }
-    lofiAudio.play().catch(() => {});
+    lofiAudio.play().catch(() => { });
 }
 
 function stopLofi() {
@@ -89,7 +88,7 @@ soundBtn?.addEventListener("click", () => {
 });
 
 // =========================
-// 🔁 MAPEO DE MODOS
+// 🔁 MAPEO CORRECTO DE MODOS
 // =========================
 function getSoundMode(mode) {
     if (mode === "pomodoro") return "pomodoro";
@@ -133,7 +132,7 @@ function setMode(mode) {
         modeText.textContent = "Tiempo de enfoque";
     }
     if (mode === "short") {
-        totalTime = 5 * 60;
+        totalTime = 1 * 60;
         modeText.textContent = "Short Break";
     }
     if (mode === "long") {
@@ -226,6 +225,166 @@ modeButtons.forEach(btn =>
 // 🚀 INICIO
 // =========================
 setMode("pomodoro");
+
+
+// =========================
+// 📝 DRAWER TAREAS
+// =========================
+
+const taskBtn = document.getElementById("taskBtn");
+const tasksDrawer = document.getElementById("tasksDrawer");
+const drawerOverlay = document.getElementById("drawerOverlay");
+const closeTasks = document.getElementById("closeTasks");
+
+const taskInput = document.getElementById("taskInput");
+const addTaskBtn = document.getElementById("addTask");
+const tasksList = document.getElementById("tasksList");
+const completedCountEl = document.getElementById("completedCount");
+
+let tasks = JSON.parse(localStorage.getItem("pomoraTasks")) || [];
+
+// =========================
+// 📂 ABRIR / CERRAR DRAWER
+// =========================
+taskBtn.addEventListener("click", () => {
+  tasksDrawer.classList.add("open");
+  drawerOverlay.classList.add("show");
+  taskInput.focus();
+});
+
+function closeDrawer() {
+  tasksDrawer.classList.remove("open");
+  drawerOverlay.classList.remove("show");
+}
+
+closeTasks.addEventListener("click", closeDrawer);
+drawerOverlay.addEventListener("click", closeDrawer);
+
+// =========================
+// ➕ AGREGAR TAREA
+// =========================
+addTaskBtn.addEventListener("click", addTask);
+taskInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") addTask();
+});
+
+function addTask() {
+  const text = taskInput.value.trim();
+  if (!text) return;
+
+  tasks.push({
+    id: Date.now(),
+    text,
+    completed: false
+  });
+
+  taskInput.value = "";
+  saveTasks();
+  renderTasks();
+}
+
+// =========================
+// 💾 STORAGE
+// =========================
+function saveTasks() {
+  localStorage.setItem("pomoraTasks", JSON.stringify(tasks));
+}
+
+function updateCompletedCount() {
+  const completed = tasks.filter(t => t.completed).length;
+  completedCountEl.textContent = completed;
+}
+
+// =========================
+// 🎉 CONFETI
+// =========================
+function launchConfetti() {
+  const colors = ["#facc15", "#4f46e5", "#22c55e", "#ef4444", "#ec4899"];
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+
+  for (let i = 0; i < 25; i++) {
+    const confetti = document.createElement("div");
+    confetti.className = "confetti";
+
+    confetti.style.background =
+      colors[Math.floor(Math.random() * colors.length)];
+
+    confetti.style.left = centerX + "px";
+    confetti.style.top = centerY + "px";
+
+    confetti.style.setProperty("--x", `${(Math.random() - 0.5) * 300}px`);
+    confetti.style.setProperty("--y", `${Math.random() * 300}px`);
+
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 900);
+  }
+}
+
+// =========================
+// 🧾 RENDER TAREAS
+// =========================
+function renderTasks() {
+  tasksList.innerHTML = "";
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+
+    li.innerHTML = `
+      <label class="task-label">
+        <input type="checkbox" ${task.completed ? "checked" : ""}>
+        <span>${task.text}</span>
+      </label>
+
+      <button class="delete">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          width="22" height="22"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="icon icon-tabler icon-tabler-trash">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M20 6H4l1 13a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3l1-13z"/>
+          <path d="M9 4h6v2H9z"/>
+        </svg>
+      </button>
+    `;
+
+    // ✔️ COMPLETAR
+    li.querySelector("input").addEventListener("change", () => {
+      task.completed = !task.completed;
+      saveTasks();
+      renderTasks();
+
+      if (task.completed) {
+        launchConfetti();
+      }
+    });
+
+    // 🗑️ ELIMINAR
+    li.querySelector(".delete").addEventListener("click", () => {
+  li.classList.add("removing");
+
+  setTimeout(() => {
+    tasks = tasks.filter(t => t.id !== task.id);
+    saveTasks();
+    renderTasks();
+  }, 250); // mismo tiempo que la animación
+});
+
+
+    tasksList.appendChild(li);
+  });
+
+  updateCompletedCount();
+}
+
+// =========================
+// 🚀 INICIO
+// =========================
+renderTasks();
+
+
 
 
 
