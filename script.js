@@ -1,5 +1,5 @@
 // =========================
-// 🔊 SONIDOS UI
+// 🔊 SONIDOS UI (NOTAS)
 // =========================
 const sounds = {
     pomodoro: {
@@ -16,17 +16,22 @@ const sounds = {
     }
 };
 
-function playUISound(type, action) {
-    if (!type || !sounds[type]) return;
-    const sound = sounds[type][action];
-    if (!sound) return;
+let audioUnlocked = false;
 
-    sound.currentTime = 0;
-    sound.play().catch(() => {});
+// ▶️ reproducir nota UI (audio NUEVO cada vez)
+function playUISound(type, action) {
+    if (!audioUnlocked) return;
+    if (!type || !sounds[type] || !sounds[type][action]) return;
+
+    const src = sounds[type][action].src;
+    const audio = new Audio(src);
+    audio.volume = 0.8;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
 }
 
 // =========================
-// 🎵 MÚSICA LOFI (FINAL)
+// 🎵 MÚSICA LOFI
 // =========================
 const lofiTracks = [
     "music/lofi2.mp3",
@@ -35,7 +40,7 @@ const lofiTracks = [
     "music/lofi5.mp3",
     "music/lofi6.mp3",
     "music/lofi7.mp3",
-    "music/lofi8.mp3",
+    "music/lofi8.mp3"
 ];
 
 let lofiAudio = new Audio();
@@ -43,7 +48,6 @@ lofiAudio.volume = 0.5;
 lofiAudio.preload = "auto";
 
 let lofiEnabled = true;
-let audioUnlocked = false;
 let lastTrack = -1;
 
 function loadRandomTrack() {
@@ -59,10 +63,7 @@ function loadRandomTrack() {
 
 function playLofi() {
     if (!lofiEnabled || !isRunning || !audioUnlocked) return;
-
-    if (!lofiAudio.src) {
-        loadRandomTrack();
-    }
+    if (!lofiAudio.src) loadRandomTrack();
 
     if (lofiAudio.paused) {
         lofiAudio.play().catch(() => {});
@@ -74,7 +75,7 @@ function stopLofi() {
     lofiAudio.currentTime = 0;
 }
 
-// 🔁 cambiar canción al terminar
+// 🔁 al terminar canción
 lofiAudio.addEventListener("ended", () => {
     if (lofiEnabled && isRunning && audioUnlocked) {
         loadRandomTrack();
@@ -91,11 +92,8 @@ const soundIcon = document.getElementById("soundIcon");
 soundBtn?.addEventListener("click", () => {
     lofiEnabled = !lofiEnabled;
 
-    if (!lofiEnabled) {
-        stopLofi();
-    } else {
-        playLofi();
-    }
+    if (!lofiEnabled) stopLofi();
+    else playLofi();
 
     soundIcon.innerHTML = lofiEnabled
         ? `<path d="M11 5l-5 4H3v6h3l5 4z"/>
@@ -127,7 +125,7 @@ const ring = document.querySelector(".ring-progress");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
 // =========================
-// ⚙️ VARIABLES TIMER
+// ⚙️ TIMER
 // =========================
 const FULL_DASH = 628;
 let timer = null;
@@ -192,8 +190,8 @@ function toggleTimer() {
     const mode = document.querySelector(".mode-btn.active")?.dataset.mode;
     const soundMode = getSoundMode(mode);
 
-    // 🎵 sesión nueva → canción nueva
-    if (timeLeft === totalTime && audioUnlocked) {
+    // 🎵 sesión nueva
+    if (timeLeft === totalTime) {
         loadRandomTrack();
         playUISound(soundMode, "start");
     }
@@ -232,10 +230,7 @@ function resetTimer() {
     isRunning = false;
     timeLeft = totalTime;
 
-    // 🔄 reset = canción nueva
-    if (audioUnlocked) {
-        loadRandomTrack();
-    }
+    loadRandomTrack();
 
     updateDisplay();
     updateRing();
@@ -243,13 +238,23 @@ function resetTimer() {
 }
 
 // =========================
-// 🎯 EVENTOS (CLAVE)
+// 🎯 EVENTOS (DESBLOQUEO AUDIO)
 // =========================
 startBtn.addEventListener("click", () => {
-    audioUnlocked = true;
+    if (!audioUnlocked) {
+        audioUnlocked = true;
 
-    if (!lofiAudio.src) {
-        loadRandomTrack();
+        // 🔓 desbloqueo silencioso
+        Object.values(sounds).forEach(group => {
+            Object.values(group).forEach(sound => {
+                sound.volume = 0;
+                sound.play().then(() => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sound.volume = 1;
+                }).catch(() => {});
+            });
+        });
     }
 
     toggleTimer();
@@ -264,6 +269,7 @@ modeButtons.forEach(btn =>
 // 🚀 INICIO
 // =========================
 setMode("pomodoro");
+
 
 
 
