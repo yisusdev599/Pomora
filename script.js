@@ -1,5 +1,5 @@
 // =========================
-// 🔊 SONIDOS UI (NOTAS)
+// 🔊 SONIDOS UI
 // =========================
 const sounds = {
     pomodoro: {
@@ -16,18 +16,13 @@ const sounds = {
     }
 };
 
-let audioUnlocked = false;
-
-// ▶️ reproducir nota UI (audio NUEVO cada vez)
 function playUISound(type, action) {
-    if (!audioUnlocked) return;
-    if (!type || !sounds[type] || !sounds[type][action]) return;
+    if (!type || !sounds[type]) return;
+    const sound = sounds[type][action];
+    if (!sound) return;
 
-    const src = sounds[type][action].src;
-    const audio = new Audio(src);
-    audio.volume = 0.8;
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
+    sound.currentTime = 0;
+    sound.play().catch(() => { });
 }
 
 // =========================
@@ -40,48 +35,33 @@ const lofiTracks = [
     "music/lofi5.mp3",
     "music/lofi6.mp3",
     "music/lofi7.mp3",
-    "music/lofi8.mp3"
+    "music/lofi8.mp3",
+    
 ];
 
 let lofiAudio = new Audio();
 lofiAudio.volume = 0.5;
-lofiAudio.preload = "auto";
+lofiAudio.loop = true;
 
 let lofiEnabled = true;
-let lastTrack = -1;
-
-function loadRandomTrack() {
-    let random;
-    do {
-        random = Math.floor(Math.random() * lofiTracks.length);
-    } while (random === lastTrack && lofiTracks.length > 1);
-
-    lastTrack = random;
-    lofiAudio.src = lofiTracks[random];
-    lofiAudio.load();
-}
+let lofiStarted = false;
 
 function playLofi() {
-    if (!lofiEnabled || !isRunning || !audioUnlocked) return;
-    if (!lofiAudio.src) loadRandomTrack();
+    if (!lofiEnabled) return;
 
-    if (lofiAudio.paused) {
-        lofiAudio.play().catch(() => {});
+    if (!lofiStarted) {
+        const random = Math.floor(Math.random() * lofiTracks.length);
+        lofiAudio.src = lofiTracks[random];
+        lofiStarted = true;
     }
+    lofiAudio.play().catch(() => { });
 }
 
 function stopLofi() {
     lofiAudio.pause();
     lofiAudio.currentTime = 0;
+    lofiStarted = false;
 }
-
-// 🔁 al terminar canción
-lofiAudio.addEventListener("ended", () => {
-    if (lofiEnabled && isRunning && audioUnlocked) {
-        loadRandomTrack();
-        lofiAudio.play().catch(() => {});
-    }
-});
 
 // =========================
 // 🔘 BOTÓN LOFI
@@ -92,8 +72,11 @@ const soundIcon = document.getElementById("soundIcon");
 soundBtn?.addEventListener("click", () => {
     lofiEnabled = !lofiEnabled;
 
-    if (!lofiEnabled) stopLofi();
-    else playLofi();
+    if (!lofiEnabled) {
+        lofiAudio.pause();
+    } else if (isRunning) {
+        playLofi();
+    }
 
     soundIcon.innerHTML = lofiEnabled
         ? `<path d="M11 5l-5 4H3v6h3l5 4z"/>
@@ -105,7 +88,7 @@ soundBtn?.addEventListener("click", () => {
 });
 
 // =========================
-// 🔁 MAPEO MODOS
+// 🔁 MAPEO CORRECTO DE MODOS
 // =========================
 function getSoundMode(mode) {
     if (mode === "pomodoro") return "pomodoro";
@@ -125,7 +108,7 @@ const ring = document.querySelector(".ring-progress");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
 // =========================
-// ⚙️ TIMER
+// ⚙️ VARIABLES
 // =========================
 const FULL_DASH = 628;
 let timer = null;
@@ -149,7 +132,7 @@ function setMode(mode) {
         modeText.textContent = "Tiempo de enfoque";
     }
     if (mode === "short") {
-        totalTime = 5 * 60;
+        totalTime = 1 * 60;
         modeText.textContent = "Short Break";
     }
     if (mode === "long") {
@@ -164,7 +147,7 @@ function setMode(mode) {
 }
 
 // =========================
-// 🕒 DISPLAY
+// 🕒 TIMER
 // =========================
 function updateDisplay() {
     minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, "0");
@@ -175,13 +158,10 @@ function updateRing() {
     ring.style.strokeDashoffset = FULL_DASH * (1 - timeLeft / totalTime);
 }
 
-// =========================
-// ▶️ TIMER
-// =========================
 function toggleTimer() {
     if (isRunning) {
         clearInterval(timer);
-        stopLofi();
+        lofiAudio.pause();
         isRunning = false;
         startBtn.textContent = "▶ Start Session";
         return;
@@ -190,14 +170,12 @@ function toggleTimer() {
     const mode = document.querySelector(".mode-btn.active")?.dataset.mode;
     const soundMode = getSoundMode(mode);
 
-    // 🎵 sesión nueva
     if (timeLeft === totalTime) {
-        loadRandomTrack();
         playUISound(soundMode, "start");
     }
 
-    isRunning = true;
     playLofi();
+    isRunning = true;
     startBtn.textContent = "⏸ Pause";
 
     timer = setInterval(() => {
@@ -229,37 +207,15 @@ function resetTimer() {
     stopLofi();
     isRunning = false;
     timeLeft = totalTime;
-
-    loadRandomTrack();
-
     updateDisplay();
     updateRing();
     startBtn.textContent = "▶ Start Session";
 }
 
 // =========================
-// 🎯 EVENTOS (DESBLOQUEO AUDIO)
+// 🎯 EVENTOS
 // =========================
-startBtn.addEventListener("click", () => {
-    if (!audioUnlocked) {
-        audioUnlocked = true;
-
-        // 🔓 desbloqueo silencioso
-        Object.values(sounds).forEach(group => {
-            Object.values(group).forEach(sound => {
-                sound.volume = 0;
-                sound.play().then(() => {
-                    sound.pause();
-                    sound.currentTime = 0;
-                    sound.volume = 1;
-                }).catch(() => {});
-            });
-        });
-    }
-
-    toggleTimer();
-});
-
+startBtn.addEventListener("click", toggleTimer);
 resetBtn.addEventListener("click", resetTimer);
 modeButtons.forEach(btn =>
     btn.addEventListener("click", () => setMode(btn.dataset.mode))
@@ -269,6 +225,165 @@ modeButtons.forEach(btn =>
 // 🚀 INICIO
 // =========================
 setMode("pomodoro");
+
+
+// =========================
+// 📝 DRAWER TAREAS
+// =========================
+
+const taskBtn = document.getElementById("taskBtn");
+const tasksDrawer = document.getElementById("tasksDrawer");
+const drawerOverlay = document.getElementById("drawerOverlay");
+const closeTasks = document.getElementById("closeTasks");
+
+const taskInput = document.getElementById("taskInput");
+const addTaskBtn = document.getElementById("addTask");
+const tasksList = document.getElementById("tasksList");
+const completedCountEl = document.getElementById("completedCount");
+
+let tasks = JSON.parse(localStorage.getItem("pomoraTasks")) || [];
+
+// =========================
+// 📂 ABRIR / CERRAR DRAWER
+// =========================
+taskBtn.addEventListener("click", () => {
+  tasksDrawer.classList.add("open");
+  drawerOverlay.classList.add("show");
+  taskInput.focus();
+});
+
+function closeDrawer() {
+  tasksDrawer.classList.remove("open");
+  drawerOverlay.classList.remove("show");
+}
+
+closeTasks.addEventListener("click", closeDrawer);
+drawerOverlay.addEventListener("click", closeDrawer);
+
+// =========================
+// ➕ AGREGAR TAREA
+// =========================
+addTaskBtn.addEventListener("click", addTask);
+taskInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") addTask();
+});
+
+function addTask() {
+  const text = taskInput.value.trim();
+  if (!text) return;
+
+  tasks.push({
+    id: Date.now(),
+    text,
+    completed: false
+  });
+
+  taskInput.value = "";
+  saveTasks();
+  renderTasks();
+}
+
+// =========================
+// 💾 STORAGE
+// =========================
+function saveTasks() {
+  localStorage.setItem("pomoraTasks", JSON.stringify(tasks));
+}
+
+function updateCompletedCount() {
+  const completed = tasks.filter(t => t.completed).length;
+  completedCountEl.textContent = completed;
+}
+
+// =========================
+// 🎉 CONFETI
+// =========================
+function launchConfetti() {
+  const colors = ["#facc15", "#4f46e5", "#22c55e", "#ef4444", "#ec4899"];
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+
+  for (let i = 0; i < 25; i++) {
+    const confetti = document.createElement("div");
+    confetti.className = "confetti";
+
+    confetti.style.background =
+      colors[Math.floor(Math.random() * colors.length)];
+
+    confetti.style.left = centerX + "px";
+    confetti.style.top = centerY + "px";
+
+    confetti.style.setProperty("--x", `${(Math.random() - 0.5) * 300}px`);
+    confetti.style.setProperty("--y", `${Math.random() * 300}px`);
+
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 900);
+  }
+}
+
+// =========================
+// 🧾 RENDER TAREAS
+// =========================
+function renderTasks() {
+  tasksList.innerHTML = "";
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+
+    li.innerHTML = `
+      <label class="task-label">
+        <input type="checkbox" ${task.completed ? "checked" : ""}>
+        <span>${task.text}</span>
+      </label>
+
+      <button class="delete">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          width="22" height="22"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="icon icon-tabler icon-tabler-trash">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M20 6H4l1 13a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3l1-13z"/>
+          <path d="M9 4h6v2H9z"/>
+        </svg>
+      </button>
+    `;
+
+    // ✔️ COMPLETAR
+    li.querySelector("input").addEventListener("change", () => {
+      task.completed = !task.completed;
+      saveTasks();
+      renderTasks();
+
+      if (task.completed) {
+        launchConfetti();
+      }
+    });
+
+    // 🗑️ ELIMINAR
+    li.querySelector(".delete").addEventListener("click", () => {
+  li.classList.add("removing");
+
+  setTimeout(() => {
+    tasks = tasks.filter(t => t.id !== task.id);
+    saveTasks();
+    renderTasks();
+  }, 250); // mismo tiempo que la animación
+});
+
+
+    tasksList.appendChild(li);
+  });
+
+  updateCompletedCount();
+}
+
+// =========================
+// 🚀 INICIO
+// =========================
+renderTasks();
+
 
 
 
