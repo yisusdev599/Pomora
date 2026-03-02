@@ -9,14 +9,13 @@ const moonIcon = document.querySelector('.moon-icon');
 const currentTheme = localStorage.getItem('theme');
 if (currentTheme) {
     if (currentTheme === 'dark') {
-        document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark-mode');
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
     }
 } else {
-    // If no preference is found, check system preferences
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.body.classList.add('dark-mode');
+    // Check initial state from html tag (set by head script)
+    if (document.documentElement.classList.contains('dark-mode')) {
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
     }
@@ -25,10 +24,10 @@ if (currentTheme) {
 // Toggle Theme Button Listener
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode');
         let theme = 'light';
         
-        if (document.body.classList.contains('dark-mode')) {
+        if (document.documentElement.classList.contains('dark-mode')) {
             theme = 'dark';
             sunIcon.style.display = 'none';
             moonIcon.style.display = 'block';
