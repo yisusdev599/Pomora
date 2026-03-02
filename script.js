@@ -63,12 +63,19 @@ const playlist = [
         cover: "cover/cover2.jpg", 
         src: "music/lofi4.mp3" 
     },
-    { 
-        title: "Deep Work", 
-        artist: "Ambient Nature", 
-        cover: "cover/cover3.jpg", 
-        src: "music/lofi7.mp3" 
-    }
+{ 
+    title: "Deep Work", 
+    artist: "Ambient Nature", 
+    cover: "cover/cover3.jpg", 
+    src: "music/lofi7.mp3" 
+},
+{ 
+    title: "404 Peace Not Found", 
+    artist: "Low Signal", 
+    cover: "cover/cover4.jpg", 
+    src: "music/404 Peace Not Found.mp3" 
+}
+
 ];
 
 // =========================================
