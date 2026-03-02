@@ -20,7 +20,7 @@
 }
 
 /* Dark Mode Theme Variables */
-body.dark-mode {
+html.dark-mode body {
     --bg-color: #121212;
     --bg-gradient: linear-gradient(135deg, #181818 0%, #0d0d0d 100%);
     --text-main: #e0e0e0;
@@ -124,7 +124,7 @@ body {
     transition: background 0.4s;
 }
 
-body.dark-mode .mode-selector {
+html.dark-mode .mode-selector {
     background: rgba(255, 255, 255, 0.05);
 }
 
