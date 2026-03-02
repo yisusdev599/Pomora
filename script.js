@@ -1,4 +1,47 @@
 // =========================================
+// 🌙 DARK MODE LOGIC
+// =========================================
+const themeToggleBtn = document.getElementById('themeToggle');
+const sunIcon = document.querySelector('.sun-icon');
+const moonIcon = document.querySelector('.moon-icon');
+
+// Check for saved user preference, if any, on load of the website
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme) {
+    if (currentTheme === 'dark') {
+        document.documentElement.classList.add('dark-mode');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+} else {
+    // Check initial state from html tag (set by head script)
+    if (document.documentElement.classList.contains('dark-mode')) {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+}
+
+// Toggle Theme Button Listener
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark-mode');
+        let theme = 'light';
+        
+        if (document.documentElement.classList.contains('dark-mode')) {
+            theme = 'dark';
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+        } else {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+        }
+        
+        // Save the current preference to localStorage
+        localStorage.setItem('theme', theme);
+    });
+}
+
+// =========================================
 // 🔊 SONIDOS UI Y CONFIG
 // =========================================
 const sounds = {
