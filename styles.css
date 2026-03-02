@@ -3,16 +3,37 @@
    ========================================= */
 :root {
     --bg-color: #fdfaf7;
+    --bg-gradient: linear-gradient(135deg, #ffffff 0%, #f3efe8 100%);
     --primary: #f4a261;  
     --primary-dark: #e76f51;
     --text-main: #2d2d2d;
     --text-muted: #8e8e8e;
     --white: #ffffff;
+    --box-bg: var(--white);
+    --border-color: #eee;
+    --btn-hover: rgba(0,0,0,0.05);
     
     /* Efectos Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-bg: rgba(255, 255, 255, 0.10);
     --glass-border: rgba(255, 255, 255, 0.5);
     --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode Theme Variables */
+html.dark-mode body {
+    --bg-color: #121212;
+    --bg-gradient: linear-gradient(135deg, #181818 0%, #0d0d0d 100%);
+    --text-main: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --white: #1e1e1e;
+    --box-bg: #1e1e1e;
+    --border-color: #333;
+    --btn-hover: rgba(255,255,255,0.08);
+
+    /* Darker Glassmorphism */
+    --glass-bg: rgba(30, 30, 30, 0.10);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -23,13 +44,14 @@
 }
 
 body {
-    background: linear-gradient(135deg, #ffffff 0%, #f3efe8 100%);
+    background: var(--bg-gradient);
     color: var(--text-main);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     overflow-x: hidden;
     overflow-y: auto;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
 /* =========================================
@@ -49,8 +71,9 @@ body {
 .header { 
     width: 100%; 
     display: flex; 
-    justify-content: flex-start; 
-    padding-left: 20px; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 0 20px; 
 }
 
 .logo { 
@@ -64,7 +87,29 @@ body {
 .logo-text {
     font-size: 1.8rem;
     font-weight: 800;
-    color: #333333; 
+    color: var(--text-main); 
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    background: var(--box-bg);
+    border: 1px solid var(--border-color);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.theme-toggle:hover {
+    color: var(--primary);
+    transform: rotate(15deg);
+    border-color: var(--primary);
 }
 
 /* =========================================
@@ -76,6 +121,11 @@ body {
     border-radius: 20px;
     display: flex;
     gap: 5px;
+    transition: background 0.4s;
+}
+
+html.dark-mode .mode-selector {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .mode-btn {
@@ -103,7 +153,7 @@ body {
 }
 
 .progress-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-.ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.04); stroke-width: 8; }
+.ring-bg { fill: none; stroke: var(--border-color); stroke-width: 8; transition: stroke 0.4s; }
 .ring-progress {
     fill: none;
     stroke: var(--primary);
@@ -144,10 +194,11 @@ body {
 }
 
 .secondary-btn {
-    background: var(--white);
+    background: var(--box-bg);
     width: 55px; height: 55px;
     border-radius: 18px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
     font-size: 1.2rem;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -162,7 +213,7 @@ body {
 }
 
 .daily-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; }
-.daily-bar { height: 8px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+.daily-bar { height: 8px; background: var(--border-color); border-radius: 10px; overflow: hidden; }
 .daily-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.5s; }
 
 .quote { font-style: italic; color: var(--text-muted); opacity: 0.8; text-align: center; margin-top: 20px; }
@@ -241,7 +292,7 @@ body {
 
 .close-btn {
     width: 35px; height: 35px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,0.05); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    background: var(--btn-hover); cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 
 /* LAYOUT DE DOS COLUMNAS */
@@ -327,13 +378,13 @@ body {
 #volumeSlider { width: 80px; accent-color: var(--primary); }
 
 .progress-section { display: flex; align-items: center; gap: 10px; width: 100%; font-size: 0.8rem; }
-.progress-bar { flex: 1; height: 5px; background: rgba(0,0,0,0.05); border-radius: 10px; cursor: pointer; position: relative; }
+.progress-bar { flex: 1; height: 5px; background: var(--border-color); border-radius: 10px; cursor: pointer; position: relative; }
 .progress-fill { height: 100%; background: var(--primary); border-radius: 10px; width: 0%; }
 
 /* COLUMNA DERECHA: PLAYLIST */
 .playlist-container {
     flex: 1;
-    border-left: 1px solid rgba(0,0,0,0.08);
+    border-left: 1px solid var(--border-color);
     padding-left: 40px;
     max-height: 450px;
     overflow-y: auto;
@@ -346,7 +397,7 @@ body {
     display: flex; align-items: center; gap: 15px;
     padding: 12px; border-radius: 15px; cursor: pointer; transition: 0.2s;
 }
-.track:hover { background: rgba(0,0,0,0.03); }
+.track:hover { background: var(--btn-hover); }
 .track.active { background: rgba(244, 162, 97, 0.1); border-left: 4px solid var(--primary); }
 
 .track-img { width: 45px; height: 45px; border-radius: 10px; }
@@ -357,15 +408,16 @@ body {
 #tasksList { list-style: none; margin-top: 20px; }
 .task-item { 
     display: flex; align-items: center; justify-content: space-between; 
-    padding: 12px; background: white; border-radius: 12px; margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    padding: 12px; background: var(--box-bg); border-radius: 12px; margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    color: var(--text-main);
 }
 
 /* RESPONSIVIDAD */
 @media (max-width: 900px) {
     .player-layout { flex-direction: column; align-items: center; gap: 30px; }
     .music-player { flex: none; width: 100%; }
-    .playlist-container { border-left: none; padding-left: 0; width: 100%; border-top: 1px solid #eee; padding-top: 20px; }
+    .playlist-container { border-left: none; padding-left: 0; width: 100%; border-top: 1px solid var(--border-color); padding-top: 20px; }
     .tasks-drawer { width: 100%; right: -100%; }
 }
 
@@ -385,7 +437,7 @@ body {
 
     border: none;
 
-    background: rgba(0, 0, 0, 0.05); /* Fondo suave casi invisible */
+    background: var(--btn-hover); /* Fondo suave */
 
     color: var(--text-muted);
 
