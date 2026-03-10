@@ -93,28 +93,64 @@
         </footer>
 
         <nav class="bottom-actions">
-            <button class="icon-btn" id="taskBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" />
-                    <path d="M14 19l2 2l4 -4" />
-                    <path d="M9 8h4" />
-                    <path d="M9 12h2" />
-                </svg>
-            </button>
 
-            <button class="icon-btn" id="soundBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <path d="M3 17a3 3 0 1 0 6 0" />
-                    <path d="M13 17a3 3 0 1 0 6 0" />
-                    <path d="M9 17v-13h10v13" />
-                    <path d="M9 8h10" />
-                </svg>
-            </button>
-        </nav>
+    <button class="icon-btn" id="taskBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" />
+            <path d="M14 19l2 2l4 -4" />
+            <path d="M9 8h4" />
+            <path d="M9 12h2" />
+        </svg>
+    </button>
+
+    <button class="icon-btn" id="play-ambientkBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M7 4v16l13 -8l-13 -8" />
+        </svg>
+    </button>
+
+    <button class="icon-btn" id="ambientkBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 10v3" />
+            <path d="M6 6v11" />
+            <path d="M10 3v18" />
+            <path d="M14 8v7" />
+            <path d="M18 5v13" />
+            <path d="M22 10v3" />
+        </svg>
+    </button>
+
+    <button class="icon-btn" id="soundBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M3 17a3 3 0 1 0 6 0" />
+            <path d="M13 17a3 3 0 1 0 6 0" />
+            <path d="M9 17v-13h10v13" />
+            <path d="M9 8h10" />
+        </svg>
+    </button>
+
+</nav>
 
     </main>
+
+
+    <aside class="ambient-drawer" id="ambientDrawer">
+    <div class="drawer-header">
+        <span class="drawer-title">Sonidos Ambientales</span>
+        <button id="closeAmbient" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+    <div id="ambientControls" class="ambient-controls">
+        </div>
+</aside>
 
     <aside class="tasks-drawer" id="tasksDrawer">
         <div class="drawer-header">
@@ -144,7 +180,11 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
+
+        
         </div>
+
+
 
         <div class="player-content">
             <div class="player-layout">
@@ -246,11 +286,14 @@
                     </ul>
                 </div>
 
+
             </div> <audio id="audioPlayer">
                 <source src="song1.mp3" type="audio/mpeg">
             </audio>
         </div>
     </aside>
+
+
 
     <script src="script.js"></script>
 </body>
