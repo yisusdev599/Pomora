@@ -101,7 +101,7 @@ const playlist = [
 // Creamos un nuevo objeto Audio específico para el ambiente
 const ambientPlayer = new Audio();
 ambientPlayer.loop = true; // ¡Esto es clave para el sonido infinito!
-
+ 
 
 // =========================================
 // 🧩 ELEMENTOS DEL DOM
