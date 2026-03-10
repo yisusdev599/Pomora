@@ -50,6 +50,11 @@ const sounds = {
     long: { start: new Audio("sounds/long_start.mp3"), end: new Audio("sounds/long_end.mp3") }
 };
 
+
+
+
+
+
 const playlist = [
     { 
         title: " ( interstellar main theam)", 
@@ -74,9 +79,29 @@ const playlist = [
     artist: "Low Signal", 
     cover: "cover/cover4.jpg", 
     src: "music/404 Peace Not Found.mp3" 
+},
+{ 
+    title: "Heavy Rain", 
+    artist: "Lofi HipHop", 
+    cover: "cover/cover5.jpg", 
+    src: "music/Heavy Rain Lofi HipHop.mp3" 
+},
+{
+    title: "Tokyo Lofi Study ",
+    artist: "Chillhop Music",
+    cover: "cover/tokyocover.jpg",
+    src: "music/ＴＯＫＹＯ Lofi.mp3"
 }
 
 ];
+
+
+
+
+// Creamos un nuevo objeto Audio específico para el ambiente
+const ambientPlayer = new Audio();
+ambientPlayer.loop = true; // ¡Esto es clave para el sonido infinito!
+
 
 // =========================================
 // 🧩 ELEMENTOS DEL DOM
@@ -116,6 +141,99 @@ let isShuffle = false;
 let isRepeat = false;
 const FULL_DASH = 628;
 
+
+
+// =========================================
+// 🌲 LÓGICA DE SONIDOS AMBIENTALES
+// =========================================
+// Asegúrate de que ambientDrawer solo se declare UNA VEZ en todo tu archivo
+// Si ya la tienes declarada arriba, borra esta línea:
+// const ambientDrawer = document.getElementById("ambientDrawer"); 
+
+const ambientSoundsData = [
+    { name: "Rain", audio: new Audio("sounds/rain.wav") },
+    { name: "Forest", audio: new Audio("sounds/forest.wav") },
+    { name: "Thunder", audio: new Audio("sounds/thunder.wav") },
+    { name: "wind", audio: new Audio("sounds/wind.mp3") }
+];
+
+// Estado global para controlar si el audio está "encendido" o "apagado"
+let isAmbientPlaying = false;
+
+// Configuración inicial de los audios (sin reproducir aún)
+ambientSoundsData.forEach(sound => {
+    sound.audio.loop = true;
+    sound.audio.volume = 0.5; // Volumen por defecto
+});
+
+
+const ambientControlsContainer = document.getElementById("ambientControls");
+const ambientBtn = document.getElementById("ambientkBtn"); 
+const closeAmbient = document.getElementById("closeAmbient");
+const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn"); // Botón de Play
+
+toggleAmbientPlayBtn.addEventListener("click", () => {
+    isAmbientPlaying = !isAmbientPlaying;
+    
+    // Cambiamos el estado visual con una sola línea:
+    toggleAmbientPlayBtn.classList.toggle("active", isAmbientPlaying);
+    
+    ambientSoundsData.forEach(sound => {
+        if (isAmbientPlaying) {
+            sound.audio.play().catch(e => console.log(e));
+        } else {
+            sound.audio.pause();
+        }
+    });
+});
+
+// --- Lógica del Drawer ---
+function renderAmbientSliders() {
+    ambientControlsContainer.innerHTML = "";
+    ambientSoundsData.forEach((sound, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "ambient-slider-wrapper";
+        wrapper.innerHTML = `
+            <label>${sound.name}</label>
+            <input type="range" min="0" max="1" step="0.1" value="${sound.audio.volume}" 
+                   oninput="ambientSoundsData[${index}].audio.volume = this.value">
+        `;
+        ambientControlsContainer.appendChild(wrapper);
+    });
+}
+
+ambientBtn.addEventListener("click", () => ambientDrawer.classList.add("open"));
+closeAmbient.addEventListener("click", () => ambientDrawer.classList.remove("open"));
+
+// Renderizado dinámico de sliders (usando addEventListener)
+function renderAmbientSliders() {
+    ambientControlsContainer.innerHTML = "";
+    ambientSoundsData.forEach((sound, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "ambient-slider-wrapper";
+        wrapper.innerHTML = `
+            <label>${sound.name}</label>
+            <input type="range" class="ambient-slider" min="0" max="1" step="0.1" value="${sound.audio.volume}">
+        `;
+        
+        // Escuchador de eventos limpio
+        const slider = wrapper.querySelector(".ambient-slider");
+        slider.addEventListener("input", (e) => {
+            const vol = parseFloat(e.target.value);
+            sound.audio.volume = vol;
+            
+            // Si el maestro está encendido, reproducimos si el volumen sube
+            if (isAmbientPlaying && vol > 0 && sound.audio.paused) {
+                sound.audio.play().catch(e => console.log(e));
+            } else if (vol === 0) {
+                sound.audio.pause();
+            }
+        });
+        
+        ambientControlsContainer.appendChild(wrapper);
+    });
+}
+
 // =========================================
 // 🕒 LÓGICA DEL TEMPORIZADOR
 // =========================================
@@ -134,9 +252,12 @@ function toggleTimer() {
         isRunning = false;
         startBtn.textContent = "▶ Start Session";
     } else {
-        if (timeLeft === totalTime) playUISound();
+        // Sonido de START solo cuando el usuario hace clic
+        playUISound('start'); 
+        
         isRunning = true;
         startBtn.textContent = "⏸ Pause Session";
+        
         timer = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
@@ -146,17 +267,29 @@ function toggleTimer() {
                 clearInterval(timer);
                 isRunning = false;
                 startBtn.textContent = "▶ Start Session";
-                fadeMusicOut();
+                
+                // --- AQUÍ EL CAMBIO ---
+    
+                playUISound('end'); // Solo el sonido de FIN
+                
+                timeLeft = totalTime;
+                updateDisplay();
+                updateRing();
             }
         }, 1000);
     }
 }
-
-function playUISound() {
+                
+function playUISound(type = 'start') {
     const activeBtn = document.querySelector(".mode-btn.active");
     const mode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
     const soundMode = mode === "pomodoro" ? "pomodoro" : (mode === "short" ? "break" : "long");
-    sounds[soundMode].start.play().catch(() => {});
+    
+    // Solo reproducir si el tipo ('start' o 'end') existe
+    if (sounds[soundMode] && sounds[soundMode][type]) {
+        sounds[soundMode][type].currentTime = 0;
+        sounds[soundMode][type].play().catch(() => {});
+    }
 }
 
 function setMode(mode) {
@@ -168,7 +301,7 @@ function setMode(mode) {
     if (targetBtn) targetBtn.classList.add("active");
 
     if (mode === "pomodoro") { totalTime = 25 * 60; modeText.textContent = "Tiempo de enfoque"; }
-    else if (mode === "short") { totalTime = 5 * 60; modeText.textContent = "Descanso corto"; }
+    else if (mode === "short") { totalTime = 1 * 60; modeText.textContent = "Descanso corto"; }
     else { totalTime = 15 * 60; modeText.textContent = "Descanso largo"; }
 
     timeLeft = totalTime;
@@ -334,6 +467,8 @@ function fadeMusicOut() {
     }, 200);
 }
 
+
+
 // =========================================
 // 🚀 EVENTOS DE UI Y CAJONES
 // =========================================
@@ -361,3 +496,4 @@ closePlayer.addEventListener("click", () => playerDrawer.classList.remove("open"
 renderPlaylist();
 loadSong(0);
 setMode("pomodoro");
+renderAmbientSliders();
