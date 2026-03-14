@@ -154,7 +154,7 @@ const ambientSoundsData = [
     { name: "Rain", audio: new Audio("sounds/rain.wav") },
     { name: "Forest", audio: new Audio("sounds/forest.wav") },
     { name: "Thunder", audio: new Audio("sounds/thunder.wav") },
-    { name: "wind", audio: new Audio("sounds/wind.mp3") }
+    { name: "wind", audio: new Audio("sounds/wind.wav") }
 ];
 
 // Estado global para controlar si el audio está "encendido" o "apagado"
