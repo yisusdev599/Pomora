@@ -5,7 +5,6 @@ const themeToggleBtn = document.getElementById('themeToggle');
 const sunIcon = document.querySelector('.sun-icon');
 const moonIcon = document.querySelector('.moon-icon');
 
-// Check for saved user preference, if any, on load of the website
 const currentTheme = localStorage.getItem('theme');
 if (currentTheme) {
     if (currentTheme === 'dark') {
@@ -14,14 +13,12 @@ if (currentTheme) {
         moonIcon.style.display = 'block';
     }
 } else {
-    // Check initial state from html tag (set by head script)
     if (document.documentElement.classList.contains('dark-mode')) {
         sunIcon.style.display = 'none';
         moonIcon.style.display = 'block';
     }
 }
 
-// Toggle Theme Button Listener
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
@@ -35,8 +32,6 @@ if (themeToggleBtn) {
             sunIcon.style.display = 'block';
             moonIcon.style.display = 'none';
         }
-        
-        // Save the current preference to localStorage
         localStorage.setItem('theme', theme);
     });
 }
@@ -50,58 +45,17 @@ const sounds = {
     long: { start: new Audio("sounds/long_start.mp3"), end: new Audio("sounds/long_end.mp3") }
 };
 
-
-
-
-
-
 const playlist = [
-    { 
-        title: " ( interstellar main theam)", 
-        artist: "interstellar", 
-        cover: "cover/Interstellar_Cover.jpg", 
-        src: "music/S-T-A-Y.mp3" 
-    },
-    { 
-        title: "Lo-Fi Study", 
-        artist: "Chill Beats", 
-        cover: "cover/cover2.jpg", 
-        src: "music/lofi4.mp3" 
-    },
-{ 
-    title: "Deep Work", 
-    artist: "Ambient Nature", 
-    cover: "cover/cover3.jpg", 
-    src: "music/lofi7.mp3" 
-},
-{ 
-    title: "404 Peace Not Found", 
-    artist: "Low Signal", 
-    cover: "cover/cover4.jpg", 
-    src: "music/404 Peace Not Found.mp3" 
-},
-{ 
-    title: "Heavy Rain", 
-    artist: "Lofi HipHop", 
-    cover: "cover/cover5.jpg", 
-    src: "music/Heavy Rain Lofi HipHop.mp3" 
-},
-{
-    title: "Tokyo Lofi Study ",
-    artist: "Chillhop Music",
-    cover: "cover/tokyocover.jpg",
-    src: "music/ＴＯＫＹＯ Lofi.mp3"
-}
-
+    { title: " ( interstellar main theam)", artist: "interstellar", cover: "cover/Interstellar_Cover.jpg", src: "music/S-T-A-Y.mp3" },
+    { title: "Lo-Fi Study", artist: "Chill Beats", cover: "cover/cover2.jpg", src: "music/lofi4.mp3" },
+    { title: "Deep Work", artist: "Ambient Nature", cover: "cover/cover3.jpg", src: "music/lofi7.mp3" },
+    { title: "404 Peace Not Found", artist: "Low Signal", cover: "cover/cover4.jpg", src: "music/404 Peace Not Found.mp3" },
+    { title: "Heavy Rain", artist: "Lofi HipHop", cover: "cover/cover5.jpg", src: "music/Heavy Rain Lofi HipHop.mp3" },
+    { title: "Tokyo Lofi Study ", artist: "Chillhop Music", cover: "cover/tokyocover.jpg", src: "music/ＴＯＫＹＯ Lofi.mp3" }
 ];
 
-
-
-
-// Creamos un nuevo objeto Audio específico para el ambiente
 const ambientPlayer = new Audio();
-ambientPlayer.loop = true; // ¡Esto es clave para el sonido infinito!
- 
+ambientPlayer.loop = true;
 
 // =========================================
 // 🧩 ELEMENTOS DEL DOM
@@ -114,7 +68,6 @@ const resetBtn = document.getElementById("resetBtn");
 const ring = document.querySelector(".ring-progress");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
-// Player Elements
 const audio = document.getElementById("audioPlayer");
 const playBtn = document.getElementById("playBtn");
 const prevBtn = document.getElementById("prevBtn");
@@ -127,7 +80,8 @@ const progressFill = document.getElementById("progressFill");
 const songTitle = document.getElementById("song-title");
 const songArtist = document.getElementById("song-artist");
 const songCover = document.getElementById("song-cover");
-const playlistContainer = document.getElementById("playlist"); // El <ul> en tu HTML
+const playlistContainer = document.getElementById("playlist");
+const ambientDrawer = document.getElementById("ambientDrawer");
 
 // =========================================
 // ⚙️ VARIABLES DE ESTADO
@@ -143,13 +97,24 @@ const FULL_DASH = 628;
 
 
 
+
+// --- COPIA ESTE BLOQUE AQUÍ ---
+let sessionsCompletedToday = parseInt(localStorage.getItem('sessionsCompleted')) || 0;
+const lastSessionDate = localStorage.getItem('lastSessionDate');
+const today = new Date().toDateString();
+
+// Reinicio automático si el día cambió
+if (lastSessionDate !== today) {
+    sessionsCompletedToday = 0;
+    localStorage.setItem('sessionsCompleted', 0);
+    localStorage.setItem('lastSessionDate', today);
+}
+const SESSIONS_GOAL = 8;
+// ------------------------------
+
 // =========================================
 // 🌲 LÓGICA DE SONIDOS AMBIENTALES
 // =========================================
-// Asegúrate de que ambientDrawer solo se declare UNA VEZ en todo tu archivo
-// Si ya la tienes declarada arriba, borra esta línea:
-// const ambientDrawer = document.getElementById("ambientDrawer"); 
-
 const ambientSoundsData = [
     { name: "Rain", audio: new Audio("sounds/rain.wav") },
     { name: "Forest", audio: new Audio("sounds/forest.wav") },
@@ -157,27 +122,20 @@ const ambientSoundsData = [
     { name: "wind", audio: new Audio("sounds/wind.wav") }
 ];
 
-// Estado global para controlar si el audio está "encendido" o "apagado"
 let isAmbientPlaying = false;
-
-// Configuración inicial de los audios (sin reproducir aún)
 ambientSoundsData.forEach(sound => {
     sound.audio.loop = true;
-    sound.audio.volume = 0.5; // Volumen por defecto
+    sound.audio.volume = 0.5;
 });
-
 
 const ambientControlsContainer = document.getElementById("ambientControls");
 const ambientBtn = document.getElementById("ambientkBtn"); 
 const closeAmbient = document.getElementById("closeAmbient");
-const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn"); // Botón de Play
+const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn");
 
 toggleAmbientPlayBtn.addEventListener("click", () => {
     isAmbientPlaying = !isAmbientPlaying;
-    
-    // Cambiamos el estado visual con una sola línea:
     toggleAmbientPlayBtn.classList.toggle("active", isAmbientPlaying);
-    
     ambientSoundsData.forEach(sound => {
         if (isAmbientPlaying) {
             sound.audio.play().catch(e => console.log(e));
@@ -187,49 +145,104 @@ toggleAmbientPlayBtn.addEventListener("click", () => {
     });
 });
 
-// --- Lógica del Drawer ---
-function renderAmbientSliders() {
-    ambientControlsContainer.innerHTML = "";
-    ambientSoundsData.forEach((sound, index) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "ambient-slider-wrapper";
-        wrapper.innerHTML = `
-            <label>${sound.name}</label>
-            <input type="range" min="0" max="1" step="0.1" value="${sound.audio.volume}" 
-                   oninput="ambientSoundsData[${index}].audio.volume = this.value">
-        `;
-        ambientControlsContainer.appendChild(wrapper);
-    });
-}
-
 ambientBtn.addEventListener("click", () => ambientDrawer.classList.add("open"));
 closeAmbient.addEventListener("click", () => ambientDrawer.classList.remove("open"));
 
-// Renderizado dinámico de sliders (usando addEventListener)
+// =========================================
+// 📝 LÓGICA DE TAREAS (NOTAS)
+// =========================================
+const taskBtn = document.getElementById('taskBtn');
+const tasksDrawer = document.getElementById('tasksDrawer');
+const closeTasks = document.getElementById('closeTasks');
+const drawerOverlay = document.getElementById('drawerOverlay');
+const taskInput = document.getElementById('taskInput');
+const addTaskBtn = document.getElementById('addTask');
+const tasksList = document.getElementById('tasksList');
+const completedCount = document.getElementById('completedCount');
+
+taskBtn.addEventListener('click', () => {
+    tasksDrawer.classList.add('open');
+    drawerOverlay.classList.add('active');
+});
+
+closeTasks.addEventListener('click', () => {
+    tasksDrawer.classList.remove('open');
+    drawerOverlay.classList.remove('active');
+});
+
+drawerOverlay.addEventListener('click', () => {
+    tasksDrawer.classList.remove('open');
+    drawerOverlay.classList.remove('active');
+});
+
+let tasks = JSON.parse(localStorage.getItem('pomora_tasks')) || [];
+
+function saveTasks() {
+    localStorage.setItem('pomora_tasks', JSON.stringify(tasks));
+    renderTasks();
+}
+
+function renderTasks() {
+    tasksList.innerHTML = '';
+    let completed = 0;
+    tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+            <div class="task-info-content">
+                <span class="checkbox">${task.completed ? '✓' : ''}</span>
+                <span class="task-text">${task.text}</span>
+            </div>
+            <button class="delete-task">✕</button>
+        `;
+        li.querySelector('.task-info-content').addEventListener('click', () => {
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks();
+        });
+        li.querySelector('.delete-task').addEventListener('click', (e) => {
+            e.stopPropagation();
+            tasks.splice(index, 1);
+            saveTasks();
+        });
+        tasksList.appendChild(li);
+        if (task.completed) completed++;
+    });
+    completedCount.textContent = completed;
+}
+
+function addNewTask() {
+    const text = taskInput.value.trim();
+    if (text !== "") {
+        tasks.push({ text: text, completed: false });
+        taskInput.value = '';
+        saveTasks();
+    }
+}
+
+addTaskBtn.addEventListener('click', addNewTask);
+taskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addNewTask();
+});
+
 function renderAmbientSliders() {
     ambientControlsContainer.innerHTML = "";
-    ambientSoundsData.forEach((sound, index) => {
+    ambientSoundsData.forEach((sound) => {
         const wrapper = document.createElement("div");
         wrapper.className = "ambient-slider-wrapper";
         wrapper.innerHTML = `
             <label>${sound.name}</label>
             <input type="range" class="ambient-slider" min="0" max="1" step="0.1" value="${sound.audio.volume}">
         `;
-        
-        // Escuchador de eventos limpio
         const slider = wrapper.querySelector(".ambient-slider");
         slider.addEventListener("input", (e) => {
             const vol = parseFloat(e.target.value);
             sound.audio.volume = vol;
-            
-            // Si el maestro está encendido, reproducimos si el volumen sube
             if (isAmbientPlaying && vol > 0 && sound.audio.paused) {
                 sound.audio.play().catch(e => console.log(e));
             } else if (vol === 0) {
                 sound.audio.pause();
             }
         });
-        
         ambientControlsContainer.appendChild(wrapper);
     });
 }
@@ -252,12 +265,14 @@ function toggleTimer() {
         isRunning = false;
         startBtn.textContent = "▶ Start Session";
     } else {
-        // Sonido de START solo cuando el usuario hace clic
-        playUISound('start'); 
-        
+        playUISound('start');
         isRunning = true;
         startBtn.textContent = "⏸ Pause Session";
         
+        if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
         timer = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
@@ -267,25 +282,63 @@ function toggleTimer() {
                 clearInterval(timer);
                 isRunning = false;
                 startBtn.textContent = "▶ Start Session";
-                
-                // --- AQUÍ EL CAMBIO ---
+                playUISound('end');
+
+                const activeBtn = document.querySelector(".mode-btn.active");
+                const currentMode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
+
+                if (currentMode === "pomodoro") {
+                    if (Notification.permission === "granted") {
+                        new Notification("¡Pomodoro finalizado! 🎉", { 
+                            body: "Es hora de un descanso de 5 minutos.",
+                            icon: 'logo-img.png' 
+                        });
+                    }
+                    sessionsCompletedToday++;
+                    localStorage.setItem('sessionsCompleted', sessionsCompletedToday);
+                    updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
+                    setMode("short");
+                } else {
+                    if (Notification.permission === "granted") {
+                        new Notification("¡Descanso terminado! 🚀", { 
+                            body: "Es hora de volver a enfocarse.",
+                            icon: 'logo.png'
+                        });
+                    }
+                    setMode("pomodoro");
+
+// ... dentro del else donde termina el tiempo ...
+if (currentMode === "pomodoro") {
+    // ... notificaciones y progreso ...
+    setMode("short"); // Cambia el tiempo a 5:00
     
-                playUISound('end'); // Solo el sonido de FIN
-                
-                timeLeft = totalTime;
-                updateDisplay();
-                updateRing();
+    //  PARA QUE EL DESCANSO EMPIECE SOLO:
+    setTimeout(() => {
+        toggleTimer(); 
+    }, 500); // Un pequeño retraso para que el usuario note el cambio
+    
+} else {
+    // ... notificaciones ...
+    setMode("pomodoro"); // Cambia el tiempo a 25:00
+    
+    // para QUE EL TRABAJO EMPIECE SOLO:
+    setTimeout(() => {
+        toggleTimer();
+    }, 500);
+}
+
+                }
             }
         }, 1000);
     }
 }
-                
+
+
+
 function playUISound(type = 'start') {
     const activeBtn = document.querySelector(".mode-btn.active");
     const mode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
     const soundMode = mode === "pomodoro" ? "pomodoro" : (mode === "short" ? "break" : "long");
-    
-    // Solo reproducir si el tipo ('start' o 'end') existe
     if (sounds[soundMode] && sounds[soundMode][type]) {
         sounds[soundMode][type].currentTime = 0;
         sounds[soundMode][type].play().catch(() => {});
@@ -301,7 +354,7 @@ function setMode(mode) {
     if (targetBtn) targetBtn.classList.add("active");
 
     if (mode === "pomodoro") { totalTime = 25 * 60; modeText.textContent = "Tiempo de enfoque"; }
-    else if (mode === "short") { totalTime = 1 * 60; modeText.textContent = "Descanso corto"; }
+    else if (mode === "short") { totalTime = 5 * 60; modeText.textContent = "Descanso corto"; }
     else { totalTime = 15 * 60; modeText.textContent = "Descanso largo"; }
 
     timeLeft = totalTime;
@@ -309,10 +362,16 @@ function setMode(mode) {
     updateRing();
 }
 
+// Nueva función de progreso
+function updateDailyProgress(porcentaje) {
+  const valorReal = Math.min(Math.max(porcentaje, 0), 100);
+  document.getElementById('dailyPercent').innerText = `${valorReal}%`;
+  document.querySelector('.daily-fill').style.width = `${valorReal}%`;
+}
+
 // =========================================
 // 🎵 LÓGICA DEL REPRODUCTOR
 // =========================================
-
 function loadSong(index) {
     songIndex = index;
     const song = playlist[songIndex];
@@ -324,14 +383,12 @@ function loadSong(index) {
     updateActiveSongUI();
 }
 
-// Renderizar la lista lateral dinámicamente
 function renderPlaylist() {
     playlistContainer.innerHTML = "";
     playlist.forEach((song, index) => {
         const li = document.createElement("li");
         li.classList.add("track");
         if (index === songIndex) li.classList.add("active");
-
         li.innerHTML = `
             <img src="${song.cover}" alt="cover" class="track-img">
             <div class="track-info">
@@ -339,13 +396,11 @@ function renderPlaylist() {
                 <span class="track-artist">${song.artist}</span>
             </div>
         `;
-
         li.addEventListener("click", () => {
             loadSong(index);
             audio.play();
             updatePlayIcon(true);
         });
-
         playlistContainer.appendChild(li);
     });
 }
@@ -359,14 +414,12 @@ function updateActiveSongUI() {
 
 function updatePlayIcon(isPlaying) {
     if (isPlaying) {
-        // Icono de Pausa (dos rectángulos)
         playBtn.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="5" width="4" height="14" rx="1"></rect>
                 <rect x="14" y="5" width="4" height="14" rx="1"></rect>
             </svg>`;
     } else {
-        // Icono de Play (triángulo centrado)
         playBtn.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"></path>
@@ -396,7 +449,6 @@ function nextTrack() {
 }
 
 nextBtn.addEventListener("click", nextTrack);
-
 prevBtn.addEventListener("click", () => {
     songIndex = (songIndex - 1 + playlist.length) % playlist.length;
     loadSong(songIndex);
@@ -450,25 +502,6 @@ function formatTime(time) {
     return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function fadeMusicOut() {
-    const initialVol = audio.volume;
-    let currentVol = initialVol;
-    const fadeInterval = setInterval(() => {
-        if (currentVol > 0.05) {
-            currentVol -= 0.05;
-            audio.volume = currentVol;
-        } else {
-            clearInterval(fadeInterval);
-            audio.pause();
-            audio.volume = initialVol;
-            updatePlayIcon(false);
-            playUISound(); // Sonido de fin
-        }
-    }, 200);
-}
-
-
-
 // =========================================
 // 🚀 EVENTOS DE UI Y CAJONES
 // =========================================
@@ -484,7 +517,6 @@ resetBtn.addEventListener("click", () => {
 
 modeButtons.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
 
-// Control de Drawers
 const soundBtn = document.getElementById("soundBtn");
 const playerDrawer = document.getElementById("playerDrawer");
 const closePlayer = document.getElementById("closePlayer");
@@ -492,8 +524,28 @@ const closePlayer = document.getElementById("closePlayer");
 soundBtn.addEventListener("click", () => playerDrawer.classList.add("open"));
 closePlayer.addEventListener("click", () => playerDrawer.classList.remove("open"));
 
-// Inicialización
+
+// Cierre unificado para el overlay
+drawerOverlay.addEventListener('click', () => {
+    playerDrawer.classList.remove('open');
+    tasksDrawer.classList.remove('open'); // Si también tienes el de tareas
+    drawerOverlay.classList.remove('active');
+});
+
+// Asegura que el botón de cierre dentro del reproductor funcione
+closePlayer.addEventListener("click", () => {
+    playerDrawer.classList.remove("open");
+    drawerOverlay.classList.remove('active');
+});
+
+// 🚀 INICIALIZACIÓN )
+// =========================================
+
 renderPlaylist();
 loadSong(0);
 setMode("pomodoro");
 renderAmbientSliders();
+renderTasks();
+
+// Carga inicial del progreso (SOLO UNA VEZ AQUÍ)
+updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
