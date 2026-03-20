@@ -291,7 +291,7 @@ function toggleTimer() {
                     if (Notification.permission === "granted") {
                         new Notification("¡Pomodoro finalizado! 🎉", { 
                             body: "Es hora de un descanso de 5 minutos.",
-                            icon: 'logo-img.png' 
+                            icon: 'logo.png' 
                         });
                     }
                     sessionsCompletedToday++;
@@ -505,6 +505,33 @@ function formatTime(time) {
 // =========================================
 // 🚀 EVENTOS DE UI Y CAJONES
 // =========================================
+
+// 1. Centralizamos el cierre en una sola función robusta
+function closeAllDrawers() {
+    // Cerramos cajones visualmente
+    playerDrawer.classList.remove("open");
+    if (typeof tasksDrawer !== 'undefined') tasksDrawer.classList.remove("open");
+    if (typeof ambientDrawer !== 'undefined') ambientDrawer.classList.remove("open");
+    
+    // Ocultamos el overlay
+    if (typeof drawerOverlay !== 'undefined') {
+        drawerOverlay.classList.remove("active");
+    }
+}
+
+// 2. Eventos de los botones de apertura
+soundBtn.addEventListener("click", () => {
+    playerDrawer.classList.add("open");
+    if (typeof drawerOverlay !== 'undefined') drawerOverlay.classList.add("active");
+});
+
+// 3. Eventos de los botones de cierre (usamos la función centralizada)
+closePlayer.addEventListener("click", closeAllDrawers);
+if (typeof drawerOverlay !== 'undefined') {
+    drawerOverlay.addEventListener("click", closeAllDrawers);
+}
+
+// 4. Otros eventos de UI
 startBtn.addEventListener("click", toggleTimer);
 resetBtn.addEventListener("click", () => {
     clearInterval(timer);
@@ -516,27 +543,6 @@ resetBtn.addEventListener("click", () => {
 });
 
 modeButtons.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
-
-const soundBtn = document.getElementById("soundBtn");
-const playerDrawer = document.getElementById("playerDrawer");
-const closePlayer = document.getElementById("closePlayer");
-
-soundBtn.addEventListener("click", () => playerDrawer.classList.add("open"));
-closePlayer.addEventListener("click", () => playerDrawer.classList.remove("open"));
-
-
-// Cierre unificado para el overlay
-drawerOverlay.addEventListener('click', () => {
-    playerDrawer.classList.remove('open');
-    tasksDrawer.classList.remove('open'); // Si también tienes el de tareas
-    drawerOverlay.classList.remove('active');
-});
-
-// Asegura que el botón de cierre dentro del reproductor funcione
-closePlayer.addEventListener("click", () => {
-    playerDrawer.classList.remove("open");
-    drawerOverlay.classList.remove('active');
-});
 
 // 🚀 INICIALIZACIÓN )
 // =========================================
