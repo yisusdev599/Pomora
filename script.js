@@ -23,7 +23,7 @@ if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark-mode');
         let theme = 'light';
-        
+
         if (document.documentElement.classList.contains('dark-mode')) {
             theme = 'dark';
             sunIcon.style.display = 'none';
@@ -94,6 +94,7 @@ let songIndex = 0;
 let isShuffle = false;
 let isRepeat = false;
 const FULL_DASH = 628;
+const originalTitle = document.title;
 
 
 
@@ -129,7 +130,7 @@ ambientSoundsData.forEach(sound => {
 });
 
 const ambientControlsContainer = document.getElementById("ambientControls");
-const ambientBtn = document.getElementById("ambientkBtn"); 
+const ambientBtn = document.getElementById("ambientkBtn");
 const closeAmbient = document.getElementById("closeAmbient");
 const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn");
 
@@ -251,8 +252,15 @@ function renderAmbientSliders() {
 // 🕒 LÓGICA DEL TEMPORIZADOR
 // =========================================
 function updateDisplay() {
-    minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-    secondsEl.textContent = String(timeLeft % 60).padStart(2, "0");
+    const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+    const secs = String(timeLeft % 60).padStart(2, "0");
+    minutesEl.textContent = mins;
+    secondsEl.textContent = secs;
+
+    // Actualizar el título de la página si el timer está corriendo y la pestaña está oculta
+    if (isRunning && document.hidden) {
+        document.title = `(${mins}:${secs}) ${originalTitle}`;
+    }
 }
 
 function updateRing() {
@@ -264,24 +272,35 @@ function toggleTimer() {
         clearInterval(timer);
         isRunning = false;
         startBtn.textContent = "▶ Start Session";
+        document.title = originalTitle; // Restaurar el título al pausar
     } else {
         playUISound('start');
         isRunning = true;
         startBtn.textContent = "⏸ Pause Session";
-        
+
         if (Notification.permission === "default") {
             Notification.requestPermission();
         }
 
+        let expectedEndTime = Date.now() + (timeLeft * 1000);
+
         timer = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
+            const now = Date.now();
+            const remaining = Math.round((expectedEndTime - now) / 1000);
+
+            if (remaining > 0) {
+                timeLeft = remaining;
                 updateDisplay();
                 updateRing();
             } else {
+                timeLeft = 0;
+                updateDisplay();
+                updateRing();
+
                 clearInterval(timer);
                 isRunning = false;
                 startBtn.textContent = "▶ Start Session";
+                document.title = originalTitle; // Restaurar el título al finalizar
                 playUISound('end');
 
                 const activeBtn = document.querySelector(".mode-btn.active");
@@ -289,44 +308,33 @@ function toggleTimer() {
 
                 if (currentMode === "pomodoro") {
                     if (Notification.permission === "granted") {
-                        new Notification("¡Pomodoro finalizado! 🎉", { 
+                        new Notification("¡Pomodoro finalizado! 🎉", {
                             body: "Es hora de un descanso de 5 minutos.",
-                            icon: 'logo.png' 
+                            icon: 'logo.png'
                         });
                     }
                     sessionsCompletedToday++;
                     localStorage.setItem('sessionsCompleted', sessionsCompletedToday);
                     updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
                     setMode("short");
+
+                    // Iniciar el descanso automáticamente
+                    setTimeout(() => {
+                        toggleTimer();
+                    }, 500);
                 } else {
                     if (Notification.permission === "granted") {
-                        new Notification("¡Descanso terminado! 🚀", { 
+                        new Notification("¡Descanso terminado! 🚀", {
                             body: "Es hora de volver a enfocarse.",
                             icon: 'logo.png'
                         });
                     }
                     setMode("pomodoro");
 
-// ... dentro del else donde termina el tiempo ...
-if (currentMode === "pomodoro") {
-    // ... notificaciones y progreso ...
-    setMode("short"); // Cambia el tiempo a 5:00
-    
-    //  PARA QUE EL DESCANSO EMPIECE SOLO:
-    setTimeout(() => {
-        toggleTimer(); 
-    }, 500); // Un pequeño retraso para que el usuario note el cambio
-    
-} else {
-    // ... notificaciones ...
-    setMode("pomodoro"); // Cambia el tiempo a 25:00
-    
-    // para QUE EL TRABAJO EMPIECE SOLO:
-    setTimeout(() => {
-        toggleTimer();
-    }, 500);
-}
-
+                    // Iniciar el trabajo automáticamente
+                    setTimeout(() => {
+                        toggleTimer();
+                    }, 500);
                 }
             }
         }, 1000);
@@ -348,6 +356,7 @@ function playUISound(type = 'start') {
 function setMode(mode) {
     clearInterval(timer);
     isRunning = false;
+    document.title = originalTitle; // Restaurar el título al cambiar de modo
     startBtn.textContent = "▶ Start Session";
     modeButtons.forEach(btn => btn.classList.remove("active"));
     const targetBtn = document.querySelector(`[data-mode="${mode}"]`);
@@ -368,6 +377,21 @@ function updateDailyProgress(porcentaje) {
   document.getElementById('dailyPercent').innerText = `${valorReal}%`;
   document.querySelector('.daily-fill').style.width = `${valorReal}%`;
 }
+
+// =========================================
+// 👁️ API DE VISIBILIDAD DE PESTAÑA
+// =========================================
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        if (isRunning) {
+            const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+            const secs = String(timeLeft % 60).padStart(2, "0");
+            document.title = `(${mins}:${secs}) ${originalTitle}`;
+        }
+    } else {
+        document.title = originalTitle;
+    }
+});
 
 // =========================================
 // 🎵 LÓGICA DEL REPRODUCTOR
@@ -512,7 +536,7 @@ function closeAllDrawers() {
     playerDrawer.classList.remove("open");
     if (typeof tasksDrawer !== 'undefined') tasksDrawer.classList.remove("open");
     if (typeof ambientDrawer !== 'undefined') ambientDrawer.classList.remove("open");
-    
+
     // Ocultamos el overlay
     if (typeof drawerOverlay !== 'undefined') {
         drawerOverlay.classList.remove("active");
