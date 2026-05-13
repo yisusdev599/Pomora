@@ -1,180 +1,433 @@
 // =========================================
-// 🌙 DARK MODE LOGIC
+// 🌙 DARK MODE
 // =========================================
 const themeToggleBtn = document.getElementById('themeToggle');
 const sunIcon = document.querySelector('.sun-icon');
 const moonIcon = document.querySelector('.moon-icon');
 
-const currentTheme = localStorage.getItem('theme');
-if (currentTheme) {
-    if (currentTheme === 'dark') {
-        document.documentElement.classList.add('dark-mode');
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
-    }
-} else {
-    if (document.documentElement.classList.contains('dark-mode')) {
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
-    }
+function applyThemeIcons(isDark) {
+    if (sunIcon) sunIcon.style.display = isDark ? 'none' : 'block';
+    if (moonIcon) moonIcon.style.display = isDark ? 'block' : 'none';
 }
+
+const savedTheme = localStorage.getItem('theme');
+const isDarkOnLoad = savedTheme === 'dark';
+if (isDarkOnLoad) document.documentElement.classList.add('dark-mode');
+applyThemeIcons(isDarkOnLoad);
 
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
-        document.documentElement.classList.toggle('dark-mode');
-        let theme = 'light';
-        
-        if (document.documentElement.classList.contains('dark-mode')) {
-            theme = 'dark';
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
-        } else {
-            sunIcon.style.display = 'block';
-            moonIcon.style.display = 'none';
-        }
-        localStorage.setItem('theme', theme);
+        const isDark = document.documentElement.classList.toggle('dark-mode');
+        applyThemeIcons(isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 }
 
 // =========================================
-// 🔊 SONIDOS UI Y CONFIG
+// 🔊 SONIDOS UI
 // =========================================
 const sounds = {
-    pomodoro: { start: new Audio("sounds/start.mp3"), end: new Audio("sounds/end.mp3") },
-    break: { start: new Audio("sounds/break_start.mp3"), end: new Audio("sounds/break_end.mp3") },
-    long: { start: new Audio("sounds/long_start.mp3"), end: new Audio("sounds/long_end.mp3") }
+    pomodoro: {
+        start: new Audio('sounds/start.mp3'),
+        end:   new Audio('sounds/end.mp3')
+    },
+    break: {
+        start: new Audio('sounds/break_start.mp3'),
+        end:   new Audio('sounds/break_end.mp3')
+    },
+    long: {
+        start: new Audio('sounds/long_start.mp3'),
+        end:   new Audio('sounds/long_end.mp3')
+    }
 };
 
+function playUISound(type = 'start') {
+    const activeBtn = document.querySelector('.mode-btn.active');
+    const mode = activeBtn ? activeBtn.dataset.mode : 'pomodoro';
+    const key = mode === 'pomodoro' ? 'pomodoro' : (mode === 'short' ? 'break' : 'long');
+    const sound = sounds[key]?.[type];
+    if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(() => {});
+    }
+}
+
+// =========================================
+// 🎵 PLAYLIST
+// =========================================
 const playlist = [
-    { title: " ( interstellar main theam)", artist: "interstellar", cover: "cover/Interstellar_Cover.jpg", src: "music/S-T-A-Y.mp3" },
-    { title: "Lo-Fi Study", artist: "Chill Beats", cover: "cover/cover2.jpg", src: "music/lofi4.mp3" },
-    { title: "Deep Work", artist: "Ambient Nature", cover: "cover/cover3.jpg", src: "music/lofi7.mp3" },
-    { title: "404 Peace Not Found", artist: "Low Signal", cover: "cover/cover4.jpg", src: "music/404 Peace Not Found.mp3" },
-    { title: "Heavy Rain", artist: "Lofi HipHop", cover: "cover/cover5.jpg", src: "music/Heavy Rain Lofi HipHop.mp3" },
-    { title: "Tokyo Lofi Study ", artist: "Chillhop Music", cover: "cover/tokyocover.jpg", src: "music/ＴＯＫＹＯ Lofi.mp3" }
+    { title: 'Interstellar Main Theme', artist: 'Interstellar',       cover: 'cover/Interstellar_Cover.jpg', src: 'music/S-T-A-Y.mp3' },
+    { title: 'Lo-Fi Study',             artist: 'Chill Beats',        cover: 'cover/cover2.jpg',             src: 'music/lofi4.mp3' },
+    { title: 'Deep Work',               artist: 'Ambient Nature',     cover: 'cover/cover3.jpg',             src: 'music/lofi7.mp3' },
+    { title: '404 Peace Not Found',     artist: 'Low Signal',         cover: 'cover/cover4.jpg',             src: 'music/404 Peace Not Found.mp3' },
+    { title: 'Heavy Rain',              artist: 'Lofi HipHop',        cover: 'cover/cover5.jpg',             src: 'music/Heavy Rain Lofi HipHop.mp3' },
+    { title: 'Tokyo Lofi Study',        artist: 'Chillhop Music',     cover: 'cover/tokyocover.jpg',         src: 'music/ＴＯＫＹＯ Lofi.mp3' }
 ];
 
-const ambientPlayer = new Audio();
-ambientPlayer.loop = true;
+// =========================================
+// 🌲 SONIDOS AMBIENTALES
+// =========================================
+const ambientSoundsData = [
+    { name: 'Rain',    audio: new Audio('sounds/rain.wav') },
+    { name: 'Forest',  audio: new Audio('sounds/forest.wav') },
+    { name: 'Thunder', audio: new Audio('sounds/thunder.wav') },
+    { name: 'Wind',    audio: new Audio('sounds/wind.wav') }
+];
+
+// Precargamos y configuramos cada pista ambiental
+ambientSoundsData.forEach(s => {
+    s.audio.loop = true;
+    s.audio.volume = 0.5;
+    // preload para que no tarde al primer play
+    s.audio.preload = 'auto';
+    s.enabled = false; // estado independiente por pista
+});
+
+let isAmbientPlaying = false;
 
 // =========================================
 // 🧩 ELEMENTOS DEL DOM
 // =========================================
-const minutesEl = document.getElementById("minutes");
-const secondsEl = document.getElementById("seconds");
-const modeText = document.getElementById("modeText");
-const startBtn = document.getElementById("startBtn");
-const resetBtn = document.getElementById("resetBtn");
-const ring = document.querySelector(".ring-progress");
-const modeButtons = document.querySelectorAll(".mode-btn");
+const minutesEl   = document.getElementById('minutes');
+const secondsEl   = document.getElementById('seconds');
+const modeText    = document.getElementById('modeText');
+const startBtn    = document.getElementById('startBtn');
+const resetBtn    = document.getElementById('resetBtn');
+const ring        = document.querySelector('.ring-progress');
+const modeButtons = document.querySelectorAll('.mode-btn');
 
-const audio = document.getElementById("audioPlayer");
-const playBtn = document.getElementById("playBtn");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const shuffleBtn = document.getElementById("shuffleBtn");
-const repeatBtn = document.getElementById("repeatBtn");
-const volumeSlider = document.getElementById("volumeSlider");
-const progressBar = document.querySelector(".progress-bar");
-const progressFill = document.getElementById("progressFill");
-const songTitle = document.getElementById("song-title");
-const songArtist = document.getElementById("song-artist");
-const songCover = document.getElementById("song-cover");
-const playlistContainer = document.getElementById("playlist");
-const ambientDrawer = document.getElementById("ambientDrawer");
+const audio            = document.getElementById('audioPlayer');
+const playBtn          = document.getElementById('playBtn');
+const prevBtn          = document.getElementById('prevBtn');
+const nextBtn          = document.getElementById('nextBtn');
+const shuffleBtn       = document.getElementById('shuffleBtn');
+const repeatBtn        = document.getElementById('repeatBtn');
+const volumeSlider     = document.getElementById('volumeSlider');
+const progressBar      = document.querySelector('.progress-bar');
+const progressFill     = document.getElementById('progressFill');
+const songTitle        = document.getElementById('song-title');
+const songArtist       = document.getElementById('song-artist');
+const songCover        = document.getElementById('song-cover');
+const playlistContainer = document.getElementById('playlist');
+
+const playerDrawer   = document.getElementById('playerDrawer');
+const soundBtn       = document.getElementById('soundBtn');
+const closePlayer    = document.getElementById('closePlayer');
+
+const ambientDrawer          = document.getElementById('ambientDrawer');
+const ambientBtn             = document.getElementById('ambientkBtn');
+const closeAmbient           = document.getElementById('closeAmbient');
+const toggleAmbientPlayBtn   = document.getElementById('play-ambientkBtn');
+const ambientControlsContainer = document.getElementById('ambientControls');
+
+const taskBtn       = document.getElementById('taskBtn');
+const tasksDrawer   = document.getElementById('tasksDrawer');
+const closeTasks    = document.getElementById('closeTasks');
+const drawerOverlay = document.getElementById('drawerOverlay');
+const taskInput     = document.getElementById('taskInput');
+const addTaskBtn    = document.getElementById('addTask');
+const tasksList     = document.getElementById('tasksList');
+const completedCount = document.getElementById('completedCount');
 
 // =========================================
-// ⚙️ VARIABLES DE ESTADO
+// ⚙️ ESTADO
 // =========================================
-let timer = null;
+let timer     = null;
 let totalTime = 25 * 60;
-let timeLeft = totalTime;
+let timeLeft  = totalTime;
 let isRunning = false;
 let songIndex = 0;
 let isShuffle = false;
-let isRepeat = false;
+let isRepeat  = false;
 const FULL_DASH = 628;
 
-
-
-
-// --- COPIA ESTE BLOQUE AQUÍ ---
-let sessionsCompletedToday = parseInt(localStorage.getItem('sessionsCompleted')) || 0;
+// Progreso diario
+let sessionsCompletedToday = parseInt(localStorage.getItem('sessionsCompleted'), 10) || 0;
 const lastSessionDate = localStorage.getItem('lastSessionDate');
 const today = new Date().toDateString();
+const SESSIONS_GOAL = 8;
 
-// Reinicio automático si el día cambió
 if (lastSessionDate !== today) {
     sessionsCompletedToday = 0;
     localStorage.setItem('sessionsCompleted', 0);
     localStorage.setItem('lastSessionDate', today);
 }
-const SESSIONS_GOAL = 8;
-// ------------------------------
 
 // =========================================
-// 🌲 LÓGICA DE SONIDOS AMBIENTALES
+// 🔔 NOTIFICACIONES
 // =========================================
-const ambientSoundsData = [
-    { name: "Rain", audio: new Audio("sounds/rain.wav") },
-    { name: "Forest", audio: new Audio("sounds/forest.wav") },
-    { name: "Thunder", audio: new Audio("sounds/thunder.wav") },
-    { name: "wind", audio: new Audio("sounds/wind.wav") }
-];
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
 
-let isAmbientPlaying = false;
-ambientSoundsData.forEach(sound => {
-    sound.audio.loop = true;
-    sound.audio.volume = 0.5;
+function sendNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: 'logo.png' });
+    }
+}
+
+// =========================================
+// 🕒 TEMPORIZADOR
+// =========================================
+function updateDisplay() {
+    minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    secondsEl.textContent = String(timeLeft % 60).padStart(2, '0');
+}
+
+function updateRing() {
+    ring.style.strokeDashoffset = FULL_DASH * (1 - timeLeft / totalTime);
+}
+
+function toggleTimer() {
+    if (isRunning) {
+        clearInterval(timer);
+        isRunning = false;
+        startBtn.textContent = '▶ Start Session';
+        ring.classList.remove('running');
+        return;
+    }
+
+    // Arrancar
+    requestNotificationPermission();
+    playUISound('start');
+    isRunning = true;
+    startBtn.textContent = '⏸ Pause Session';
+    ring.classList.add('running');
+
+    timer = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateDisplay();
+            updateRing();
+            return;
+        }
+
+        // Tiempo agotado
+        clearInterval(timer);
+        isRunning = false;
+        startBtn.textContent = '▶ Start Session';
+        ring.classList.remove('running');
+        playUISound('end');
+
+        const activeBtn = document.querySelector('.mode-btn.active');
+        const currentMode = activeBtn ? activeBtn.dataset.mode : 'pomodoro';
+
+        if (currentMode === 'pomodoro') {
+            sendNotification('¡Pomodoro finalizado! 🎉', 'Es hora de un descanso de 5 minutos.');
+            sessionsCompletedToday++;
+            localStorage.setItem('sessionsCompleted', sessionsCompletedToday);
+            updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
+            setMode('short');
+        } else {
+            sendNotification('¡Descanso terminado! 🚀', 'Es hora de volver a enfocarse.');
+            setMode('pomodoro');
+        }
+
+        // Auto-arrancar el siguiente bloque después de un momento
+        setTimeout(toggleTimer, 600);
+    }, 1000);
+}
+
+function setMode(mode) {
+    clearInterval(timer);
+    isRunning = false;
+    startBtn.textContent = '▶ Start Session';
+
+    modeButtons.forEach(btn => btn.classList.remove('active'));
+    const targetBtn = document.querySelector(`[data-mode="${mode}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    if (mode === 'pomodoro') { totalTime = 25 * 60; modeText.textContent = 'Tiempo de enfoque'; }
+    else if (mode === 'short') { totalTime = 5 * 60;  modeText.textContent = 'Descanso corto'; }
+    else                       { totalTime = 15 * 60; modeText.textContent = 'Descanso largo'; }
+
+    timeLeft = totalTime;
+    updateDisplay();
+    updateRing();
+}
+
+function updateDailyProgress(pct) {
+    const val = Math.min(Math.max(pct, 0), 100);
+    const percentEl = document.getElementById('dailyPercent');
+    const fillEl    = document.querySelector('.daily-fill');
+    if (percentEl) percentEl.textContent = `${val}%`;
+    if (fillEl)    fillEl.style.width = `${val}%`;
+}
+
+// =========================================
+// 🎵 REPRODUCTOR
+// =========================================
+function loadSong(index) {
+    songIndex = index;
+    const song = playlist[songIndex];
+    songTitle.textContent  = song.title;
+    songArtist.textContent = song.artist;
+    songCover.src          = song.cover;
+    audio.src              = song.src;
+    audio.load();
+    // Animación de swap en la cover
+    songCover.classList.remove('swap');
+    void songCover.offsetWidth; // reflow para reiniciar
+    songCover.classList.add('swap');
+    updateActiveSongUI();
+}
+
+function renderPlaylist() {
+    playlistContainer.innerHTML = '';
+    playlist.forEach((song, index) => {
+        const li = document.createElement('li');
+        li.classList.add('track');
+        if (index === songIndex) li.classList.add('active');
+        li.innerHTML = `
+            <img src="${song.cover}" alt="portada" class="track-img" loading="lazy">
+            <div class="track-info">
+                <span class="track-name">${song.title}</span>
+                <span class="track-artist">${song.artist}</span>
+            </div>
+        `;
+        li.addEventListener('click', () => {
+            loadSong(index);
+            audio.play();
+            updatePlayIcon(true);
+        });
+        playlistContainer.appendChild(li);
+    });
+}
+
+function updateActiveSongUI() {
+    document.querySelectorAll('.track').forEach((track, i) => {
+        track.classList.toggle('active', i === songIndex);
+    });
+}
+
+function updatePlayIcon(playing) {
+    playBtn.innerHTML = playing
+        ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+}
+
+function nextTrack() {
+    songIndex = isShuffle
+        ? Math.floor(Math.random() * playlist.length)
+        : (songIndex + 1) % playlist.length;
+    loadSong(songIndex);
+    audio.play();
+    updatePlayIcon(true);
+}
+
+playBtn.addEventListener('click', () => {
+    if (audio.paused) { audio.play(); updatePlayIcon(true); }
+    else              { audio.pause(); updatePlayIcon(false); }
 });
 
-const ambientControlsContainer = document.getElementById("ambientControls");
-const ambientBtn = document.getElementById("ambientkBtn"); 
-const closeAmbient = document.getElementById("closeAmbient");
-const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn");
+nextBtn.addEventListener('click', nextTrack);
 
-toggleAmbientPlayBtn.addEventListener("click", () => {
-    isAmbientPlaying = !isAmbientPlaying;
-    toggleAmbientPlayBtn.classList.toggle("active", isAmbientPlaying);
+prevBtn.addEventListener('click', () => {
+    // Si llevamos más de 3 s en la canción, volvemos al inicio; si no, canción anterior
+    if (audio.currentTime > 3) {
+        audio.currentTime = 0;
+    } else {
+        songIndex = (songIndex - 1 + playlist.length) % playlist.length;
+        loadSong(songIndex);
+    }
+    audio.play();
+    updatePlayIcon(true);
+});
+
+shuffleBtn.addEventListener('click', () => {
+    isShuffle = !isShuffle;
+    shuffleBtn.classList.toggle('active-control', isShuffle);
+});
+
+repeatBtn.addEventListener('click', () => {
+    isRepeat = !isRepeat;
+    repeatBtn.classList.toggle('active-control', isRepeat);
+});
+
+audio.addEventListener('ended', () => {
+    if (isRepeat) { audio.currentTime = 0; audio.play(); }
+    else          { nextTrack(); }
+});
+
+progressBar.addEventListener('click', e => {
+    if (!audio.duration) return;
+    audio.currentTime = (e.offsetX / progressBar.clientWidth) * audio.duration;
+});
+
+volumeSlider.addEventListener('input', e => { audio.volume = e.target.value; });
+
+audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = `${pct}%`;
+    const curEl = document.getElementById('currentTime');
+    const durEl = document.getElementById('duration');
+    if (curEl) curEl.textContent = formatTime(audio.currentTime);
+    if (durEl) durEl.textContent = formatTime(audio.duration);
+});
+
+function formatTime(t) {
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// =========================================
+// 🌲 SONIDOS AMBIENTALES
+// =========================================
+function renderAmbientSliders() {
+    ambientControlsContainer.innerHTML = '';
     ambientSoundsData.forEach(sound => {
-        if (isAmbientPlaying) {
-            sound.audio.play().catch(e => console.log(e));
+        const wrapper = document.createElement('div');
+        wrapper.className = 'ambient-slider-wrapper';
+        wrapper.innerHTML = `
+            <label>${sound.name}</label>
+            <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${sound.audio.volume}">
+        `;
+        const slider = wrapper.querySelector('.ambient-slider');
+        slider.addEventListener('input', e => {
+            const vol = parseFloat(e.target.value);
+            sound.audio.volume = vol;
+
+            if (vol > 0 && isAmbientPlaying && sound.audio.paused) {
+                sound.audio.play().catch(() => {});
+            } else if (vol === 0) {
+                sound.audio.pause();
+            }
+        });
+        ambientControlsContainer.appendChild(wrapper);
+    });
+}
+
+// Play/pause global de ambiente: solo toca las pistas que tienen volumen > 0
+toggleAmbientPlayBtn.addEventListener('click', () => {
+    isAmbientPlaying = !isAmbientPlaying;
+    toggleAmbientPlayBtn.classList.toggle('active', isAmbientPlaying);
+
+    ambientSoundsData.forEach(sound => {
+        if (isAmbientPlaying && sound.audio.volume > 0) {
+            sound.audio.play().catch(() => {});
         } else {
             sound.audio.pause();
         }
     });
 });
 
-ambientBtn.addEventListener("click", () => ambientDrawer.classList.add("open"));
-closeAmbient.addEventListener("click", () => ambientDrawer.classList.remove("open"));
-
-// =========================================
-// 📝 LÓGICA DE TAREAS (NOTAS)
-// =========================================
-const taskBtn = document.getElementById('taskBtn');
-const tasksDrawer = document.getElementById('tasksDrawer');
-const closeTasks = document.getElementById('closeTasks');
-const drawerOverlay = document.getElementById('drawerOverlay');
-const taskInput = document.getElementById('taskInput');
-const addTaskBtn = document.getElementById('addTask');
-const tasksList = document.getElementById('tasksList');
-const completedCount = document.getElementById('completedCount');
-
-taskBtn.addEventListener('click', () => {
-    tasksDrawer.classList.add('open');
+ambientBtn.addEventListener('click', () => {
+    ambientDrawer.classList.add('open');
     drawerOverlay.classList.add('active');
 });
 
-closeTasks.addEventListener('click', () => {
-    tasksDrawer.classList.remove('open');
+closeAmbient.addEventListener('click', () => {
+    ambientDrawer.classList.remove('open');
     drawerOverlay.classList.remove('active');
 });
 
-drawerOverlay.addEventListener('click', () => {
-    tasksDrawer.classList.remove('open');
-    drawerOverlay.classList.remove('active');
-});
-
+// =========================================
+// 📝 TAREAS
+// =========================================
 let tasks = JSON.parse(localStorage.getItem('pomora_tasks')) || [];
 
 function saveTasks() {
@@ -193,13 +446,13 @@ function renderTasks() {
                 <span class="checkbox">${task.completed ? '✓' : ''}</span>
                 <span class="task-text">${task.text}</span>
             </div>
-            <button class="delete-task">✕</button>
+            <button class="delete-task" aria-label="Eliminar tarea">✕</button>
         `;
         li.querySelector('.task-info-content').addEventListener('click', () => {
             tasks[index].completed = !tasks[index].completed;
             saveTasks();
         });
-        li.querySelector('.delete-task').addEventListener('click', (e) => {
+        li.querySelector('.delete-task').addEventListener('click', e => {
             e.stopPropagation();
             tasks.splice(index, 1);
             saveTasks();
@@ -207,351 +460,78 @@ function renderTasks() {
         tasksList.appendChild(li);
         if (task.completed) completed++;
     });
-    completedCount.textContent = completed;
+    if (completedCount) completedCount.textContent = completed;
 }
 
 function addNewTask() {
     const text = taskInput.value.trim();
-    if (text !== "") {
-        tasks.push({ text: text, completed: false });
-        taskInput.value = '';
-        saveTasks();
-    }
+    if (!text) return;
+    tasks.push({ text, completed: false });
+    taskInput.value = '';
+    saveTasks();
 }
 
 addTaskBtn.addEventListener('click', addNewTask);
-taskInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addNewTask();
-});
-
-function renderAmbientSliders() {
-    ambientControlsContainer.innerHTML = "";
-    ambientSoundsData.forEach((sound) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "ambient-slider-wrapper";
-        wrapper.innerHTML = `
-            <label>${sound.name}</label>
-            <input type="range" class="ambient-slider" min="0" max="1" step="0.1" value="${sound.audio.volume}">
-        `;
-        const slider = wrapper.querySelector(".ambient-slider");
-        slider.addEventListener("input", (e) => {
-            const vol = parseFloat(e.target.value);
-            sound.audio.volume = vol;
-            if (isAmbientPlaying && vol > 0 && sound.audio.paused) {
-                sound.audio.play().catch(e => console.log(e));
-            } else if (vol === 0) {
-                sound.audio.pause();
-            }
-        });
-        ambientControlsContainer.appendChild(wrapper);
-    });
-}
+taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') addNewTask(); });
 
 // =========================================
-// 🕒 LÓGICA DEL TEMPORIZADOR
+// 🚀 DRAWERS — APERTURA / CIERRE
 // =========================================
-function updateDisplay() {
-    minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-    secondsEl.textContent = String(timeLeft % 60).padStart(2, "0");
+function openDrawer(drawer) {
+    drawer.classList.add('open');
+    drawerOverlay.classList.add('active');
 }
 
-function updateRing() {
-    ring.style.strokeDashoffset = FULL_DASH * (1 - timeLeft / totalTime);
-}
-
-function toggleTimer() {
-    if (isRunning) {
-        clearInterval(timer);
-        isRunning = false;
-        startBtn.textContent = "▶ Start Session";
-    } else {
-        playUISound('start');
-        isRunning = true;
-        startBtn.textContent = "⏸ Pause Session";
-        
-        if (Notification.permission === "default") {
-            Notification.requestPermission();
-        }
-
-        timer = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateDisplay();
-                updateRing();
-            } else {
-                clearInterval(timer);
-                isRunning = false;
-                startBtn.textContent = "▶ Start Session";
-                playUISound('end');
-
-                const activeBtn = document.querySelector(".mode-btn.active");
-                const currentMode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
-
-                if (currentMode === "pomodoro") {
-                    if (Notification.permission === "granted") {
-                        new Notification("¡Pomodoro finalizado! 🎉", { 
-                            body: "Es hora de un descanso de 5 minutos.",
-                            icon: 'logo.png' 
-                        });
-                    }
-                    sessionsCompletedToday++;
-                    localStorage.setItem('sessionsCompleted', sessionsCompletedToday);
-                    updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
-                    setMode("short");
-                } else {
-                    if (Notification.permission === "granted") {
-                        new Notification("¡Descanso terminado! 🚀", { 
-                            body: "Es hora de volver a enfocarse.",
-                            icon: 'logo.png'
-                        });
-                    }
-                    setMode("pomodoro");
-
-// ... dentro del else donde termina el tiempo ...
-if (currentMode === "pomodoro") {
-    // ... notificaciones y progreso ...
-    setMode("short"); // Cambia el tiempo a 5:00
-    
-    //  PARA QUE EL DESCANSO EMPIECE SOLO:
-    setTimeout(() => {
-        toggleTimer(); 
-    }, 500); // Un pequeño retraso para que el usuario note el cambio
-    
-} else {
-    // ... notificaciones ...
-    setMode("pomodoro"); // Cambia el tiempo a 25:00
-    
-    // para QUE EL TRABAJO EMPIECE SOLO:
-    setTimeout(() => {
-        toggleTimer();
-    }, 500);
-}
-
-                }
-            }
-        }, 1000);
-    }
-}
-
-
-
-function playUISound(type = 'start') {
-    const activeBtn = document.querySelector(".mode-btn.active");
-    const mode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
-    const soundMode = mode === "pomodoro" ? "pomodoro" : (mode === "short" ? "break" : "long");
-    if (sounds[soundMode] && sounds[soundMode][type]) {
-        sounds[soundMode][type].currentTime = 0;
-        sounds[soundMode][type].play().catch(() => {});
-    }
-}
-
-function setMode(mode) {
-    clearInterval(timer);
-    isRunning = false;
-    startBtn.textContent = "▶ Start Session";
-    modeButtons.forEach(btn => btn.classList.remove("active"));
-    const targetBtn = document.querySelector(`[data-mode="${mode}"]`);
-    if (targetBtn) targetBtn.classList.add("active");
-
-    if (mode === "pomodoro") { totalTime = 25 * 60; modeText.textContent = "Tiempo de enfoque"; }
-    else if (mode === "short") { totalTime = 5 * 60; modeText.textContent = "Descanso corto"; }
-    else { totalTime = 15 * 60; modeText.textContent = "Descanso largo"; }
-
-    timeLeft = totalTime;
-    updateDisplay();
-    updateRing();
-}
-
-// Nueva función de progreso
-function updateDailyProgress(porcentaje) {
-  const valorReal = Math.min(Math.max(porcentaje, 0), 100);
-  document.getElementById('dailyPercent').innerText = `${valorReal}%`;
-  document.querySelector('.daily-fill').style.width = `${valorReal}%`;
-}
-
-// =========================================
-// 🎵 LÓGICA DEL REPRODUCTOR
-// =========================================
-function loadSong(index) {
-    songIndex = index;
-    const song = playlist[songIndex];
-    songTitle.textContent = song.title;
-    songArtist.textContent = song.artist;
-    songCover.src = song.cover;
-    audio.src = song.src;
-    audio.load();
-    updateActiveSongUI();
-}
-
-function renderPlaylist() {
-    playlistContainer.innerHTML = "";
-    playlist.forEach((song, index) => {
-        const li = document.createElement("li");
-        li.classList.add("track");
-        if (index === songIndex) li.classList.add("active");
-        li.innerHTML = `
-            <img src="${song.cover}" alt="cover" class="track-img">
-            <div class="track-info">
-                <span class="track-name">${song.title}</span>
-                <span class="track-artist">${song.artist}</span>
-            </div>
-        `;
-        li.addEventListener("click", () => {
-            loadSong(index);
-            audio.play();
-            updatePlayIcon(true);
-        });
-        playlistContainer.appendChild(li);
-    });
-}
-
-function updateActiveSongUI() {
-    const tracks = document.querySelectorAll(".track");
-    tracks.forEach((track, index) => {
-        track.classList.toggle("active", index === songIndex);
-    });
-}
-
-function updatePlayIcon(isPlaying) {
-    if (isPlaying) {
-        playBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="5" width="4" height="14" rx="1"></rect>
-                <rect x="14" y="5" width="4" height="14" rx="1"></rect>
-            </svg>`;
-    } else {
-        playBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"></path>
-            </svg>`;
-    }
-}
-
-playBtn.addEventListener("click", () => {
-    if (audio.paused) {
-        audio.play();
-        updatePlayIcon(true);
-    } else {
-        audio.pause();
-        updatePlayIcon(false);
-    }
-});
-
-function nextTrack() {
-    if (isShuffle) {
-        songIndex = Math.floor(Math.random() * playlist.length);
-    } else {
-        songIndex = (songIndex + 1) % playlist.length;
-    }
-    loadSong(songIndex);
-    audio.play();
-    updatePlayIcon(true);
-}
-
-nextBtn.addEventListener("click", nextTrack);
-prevBtn.addEventListener("click", () => {
-    songIndex = (songIndex - 1 + playlist.length) % playlist.length;
-    loadSong(songIndex);
-    audio.play();
-    updatePlayIcon(true);
-});
-
-shuffleBtn.addEventListener("click", () => {
-    isShuffle = !isShuffle;
-    shuffleBtn.classList.toggle("active-control", isShuffle);
-});
-
-repeatBtn.addEventListener("click", () => {
-    isRepeat = !isRepeat;
-    repeatBtn.classList.toggle("active-control", isRepeat);
-});
-
-audio.addEventListener("ended", () => {
-    if (isRepeat) {
-        audio.currentTime = 0;
-        audio.play();
-    } else {
-        nextTrack();
-    }
-});
-
-progressBar.addEventListener("click", (e) => {
-    const width = progressBar.clientWidth;
-    const clickX = e.offsetX;
-    if (audio.duration) {
-        audio.currentTime = (clickX / width) * audio.duration;
-    }
-});
-
-volumeSlider.addEventListener("input", (e) => {
-    audio.volume = e.target.value;
-});
-
-audio.addEventListener("timeupdate", () => {
-    if (audio.duration) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progressFill.style.width = `${percent}%`;
-        document.getElementById("currentTime").textContent = formatTime(audio.currentTime);
-        document.getElementById("duration").textContent = formatTime(audio.duration);
-    }
-});
-
-function formatTime(time) {
-    const m = Math.floor(time / 60);
-    const s = Math.floor(time % 60);
-    return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-// =========================================
-// 🚀 EVENTOS DE UI Y CAJONES
-// =========================================
-
-// 1. Centralizamos el cierre en una sola función robusta
 function closeAllDrawers() {
-    // Cerramos cajones visualmente
-    playerDrawer.classList.remove("open");
-    if (typeof tasksDrawer !== 'undefined') tasksDrawer.classList.remove("open");
-    if (typeof ambientDrawer !== 'undefined') ambientDrawer.classList.remove("open");
-    
-    // Ocultamos el overlay
-    if (typeof drawerOverlay !== 'undefined') {
-        drawerOverlay.classList.remove("active");
-    }
+    playerDrawer.classList.remove('open');
+    tasksDrawer.classList.remove('open');
+    ambientDrawer.classList.remove('open');
+    drawerOverlay.classList.remove('active');
 }
 
-// 2. Eventos de los botones de apertura
-soundBtn.addEventListener("click", () => {
-    playerDrawer.classList.add("open");
-    if (typeof drawerOverlay !== 'undefined') drawerOverlay.classList.add("active");
-});
+soundBtn.addEventListener('click',  () => openDrawer(playerDrawer));
+closePlayer.addEventListener('click', closeAllDrawers);
 
-// 3. Eventos de los botones de cierre (usamos la función centralizada)
-closePlayer.addEventListener("click", closeAllDrawers);
-if (typeof drawerOverlay !== 'undefined') {
-    drawerOverlay.addEventListener("click", closeAllDrawers);
-}
+taskBtn.addEventListener('click',   () => openDrawer(tasksDrawer));
+closeTasks.addEventListener('click', closeAllDrawers);
 
-// 4. Otros eventos de UI
-startBtn.addEventListener("click", toggleTimer);
-resetBtn.addEventListener("click", () => {
+drawerOverlay.addEventListener('click', closeAllDrawers);
+
+// ─── Swipe hacia abajo para cerrar el player en móvil ───────────────────────
+(function addSwipeToClose() {
+    let startY = 0;
+    playerDrawer.addEventListener('touchstart', e => {
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    playerDrawer.addEventListener('touchend', e => {
+        const dy = e.changedTouches[0].clientY - startY;
+        if (dy > 80) closeAllDrawers(); // swipe hacia abajo ≥ 80px cierra
+    }, { passive: true });
+})();
+
+// =========================================
+// ⏱ CONTROLES DEL TIMER
+// =========================================
+startBtn.addEventListener('click', toggleTimer);
+
+resetBtn.addEventListener('click', () => {
     clearInterval(timer);
     isRunning = false;
     timeLeft = totalTime;
     updateDisplay();
     updateRing();
-    startBtn.textContent = "▶ Start Session";
+    startBtn.textContent = '▶ Start Session';
 });
 
-modeButtons.forEach(btn => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
+modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
-// 🚀 INICIALIZACIÓN )
 // =========================================
-
+// 🚀 INICIALIZACIÓN
+// =========================================
 renderPlaylist();
 loadSong(0);
-setMode("pomodoro");
+setMode('pomodoro');
 renderAmbientSliders();
 renderTasks();
-
-// Carga inicial del progreso (SOLO UNA VEZ AQUÍ)
 updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
