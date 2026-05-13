@@ -180,7 +180,7 @@ function updateDisplay() {
     // Tiempo visible en la pestaña del navegador
     const activeBtn = document.querySelector('.mode-btn.active');
     const mode = activeBtn ? activeBtn.dataset.mode : 'pomodoro';
-    const emoji = mode === 'pomodoro' ? '🍊' : (mode === 'short' ? '☕' : '🌿');
+    const emoji = mode === 'pomodoro' ? '' : (mode === 'short' ? '' : '');
     document.title = isRunning ? `${emoji} ${mm}:${ss} — Pomora` : 'Pomora';
 }
 
