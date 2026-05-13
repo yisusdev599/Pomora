@@ -17,24 +17,9 @@ applyThemeIcons(isDarkOnLoad);
 
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
-<<<<<<< HEAD
         const isDark = document.documentElement.classList.toggle('dark-mode');
         applyThemeIcons(isDark);
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-=======
-        document.documentElement.classList.toggle('dark-mode');
-        let theme = 'light';
-
-        if (document.documentElement.classList.contains('dark-mode')) {
-            theme = 'dark';
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
-        } else {
-            sunIcon.style.display = 'block';
-            moonIcon.style.display = 'none';
-        }
-        localStorage.setItem('theme', theme);
->>>>>>> 54f2f9885e941bc66792e408a96b910ab62a6ee2
     });
 }
 
@@ -155,7 +140,6 @@ let songIndex = 0;
 let isShuffle = false;
 let isRepeat  = false;
 const FULL_DASH = 628;
-const originalTitle = document.title;
 
 // Progreso diario
 let sessionsCompletedToday = parseInt(localStorage.getItem('sessionsCompleted'), 10) || 0;
@@ -338,14 +322,7 @@ playBtn.addEventListener('click', () => {
     else              { audio.pause(); updatePlayIcon(false); }
 });
 
-<<<<<<< HEAD
 nextBtn.addEventListener('click', nextTrack);
-=======
-const ambientControlsContainer = document.getElementById("ambientControls");
-const ambientBtn = document.getElementById("ambientkBtn");
-const closeAmbient = document.getElementById("closeAmbient");
-const toggleAmbientPlayBtn = document.getElementById("play-ambientkBtn");
->>>>>>> 54f2f9885e941bc66792e408a96b910ab62a6ee2
 
 prevBtn.addEventListener('click', () => {
     // Si llevamos más de 3 s en la canción, volvemos al inicio; si no, canción anterior
@@ -500,7 +477,6 @@ taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') addNewTask(
 // =========================================
 // 🚀 DRAWERS — APERTURA / CIERRE
 // =========================================
-<<<<<<< HEAD
 function openDrawer(drawer) {
     drawer.classList.add('open');
     drawerOverlay.classList.add('active');
@@ -511,298 +487,6 @@ function closeAllDrawers() {
     tasksDrawer.classList.remove('open');
     ambientDrawer.classList.remove('open');
     drawerOverlay.classList.remove('active');
-=======
-function updateDisplay() {
-    const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-    const secs = String(timeLeft % 60).padStart(2, "0");
-    minutesEl.textContent = mins;
-    secondsEl.textContent = secs;
-
-    // Actualizar el título de la página si el timer está corriendo y la pestaña está oculta
-    if (isRunning && document.hidden) {
-        document.title = `(${mins}:${secs}) ${originalTitle}`;
-    }
-}
-
-function updateRing() {
-    ring.style.strokeDashoffset = FULL_DASH * (1 - timeLeft / totalTime);
-}
-
-function toggleTimer() {
-    if (isRunning) {
-        clearInterval(timer);
-        isRunning = false;
-        startBtn.textContent = "▶ Start Session";
-        document.title = originalTitle; // Restaurar el título al pausar
-    } else {
-        playUISound('start');
-        isRunning = true;
-        startBtn.textContent = "⏸ Pause Session";
-
-        if (Notification.permission === "default") {
-            Notification.requestPermission();
-        }
-
-        let expectedEndTime = Date.now() + (timeLeft * 1000);
-
-        timer = setInterval(() => {
-            const now = Date.now();
-            const remaining = Math.round((expectedEndTime - now) / 1000);
-
-            if (remaining > 0) {
-                timeLeft = remaining;
-                updateDisplay();
-                updateRing();
-            } else {
-                timeLeft = 0;
-                updateDisplay();
-                updateRing();
-
-                clearInterval(timer);
-                isRunning = false;
-                startBtn.textContent = "▶ Start Session";
-                document.title = originalTitle; // Restaurar el título al finalizar
-                playUISound('end');
-
-                const activeBtn = document.querySelector(".mode-btn.active");
-                const currentMode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
-
-                if (currentMode === "pomodoro") {
-                    if (Notification.permission === "granted") {
-                        new Notification("¡Pomodoro finalizado! 🎉", {
-                            body: "Es hora de un descanso de 5 minutos.",
-                            icon: 'logo.png'
-                        });
-                    }
-                    sessionsCompletedToday++;
-                    localStorage.setItem('sessionsCompleted', sessionsCompletedToday);
-                    updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
-                    setMode("short");
-
-                    // Iniciar el descanso automáticamente
-                    setTimeout(() => {
-                        toggleTimer();
-                    }, 500);
-                } else {
-                    if (Notification.permission === "granted") {
-                        new Notification("¡Descanso terminado! 🚀", {
-                            body: "Es hora de volver a enfocarse.",
-                            icon: 'logo.png'
-                        });
-                    }
-                    setMode("pomodoro");
-
-                    // Iniciar el trabajo automáticamente
-                    setTimeout(() => {
-                        toggleTimer();
-                    }, 500);
-                }
-            }
-        }, 1000);
-    }
-}
-
-
-
-function playUISound(type = 'start') {
-    const activeBtn = document.querySelector(".mode-btn.active");
-    const mode = activeBtn ? activeBtn.dataset.mode : "pomodoro";
-    const soundMode = mode === "pomodoro" ? "pomodoro" : (mode === "short" ? "break" : "long");
-    if (sounds[soundMode] && sounds[soundMode][type]) {
-        sounds[soundMode][type].currentTime = 0;
-        sounds[soundMode][type].play().catch(() => {});
-    }
-}
-
-function setMode(mode) {
-    clearInterval(timer);
-    isRunning = false;
-    document.title = originalTitle; // Restaurar el título al cambiar de modo
-    startBtn.textContent = "▶ Start Session";
-    modeButtons.forEach(btn => btn.classList.remove("active"));
-    const targetBtn = document.querySelector(`[data-mode="${mode}"]`);
-    if (targetBtn) targetBtn.classList.add("active");
-
-    if (mode === "pomodoro") { totalTime = 25 * 60; modeText.textContent = "Tiempo de enfoque"; }
-    else if (mode === "short") { totalTime = 5 * 60; modeText.textContent = "Descanso corto"; }
-    else { totalTime = 15 * 60; modeText.textContent = "Descanso largo"; }
-
-    timeLeft = totalTime;
-    updateDisplay();
-    updateRing();
-}
-
-// Nueva función de progreso
-function updateDailyProgress(porcentaje) {
-  const valorReal = Math.min(Math.max(porcentaje, 0), 100);
-  document.getElementById('dailyPercent').innerText = `${valorReal}%`;
-  document.querySelector('.daily-fill').style.width = `${valorReal}%`;
-}
-
-// =========================================
-// 👁️ API DE VISIBILIDAD DE PESTAÑA
-// =========================================
-document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        if (isRunning) {
-            const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-            const secs = String(timeLeft % 60).padStart(2, "0");
-            document.title = `(${mins}:${secs}) ${originalTitle}`;
-        }
-    } else {
-        document.title = originalTitle;
-    }
-});
-
-// =========================================
-// 🎵 LÓGICA DEL REPRODUCTOR
-// =========================================
-function loadSong(index) {
-    songIndex = index;
-    const song = playlist[songIndex];
-    songTitle.textContent = song.title;
-    songArtist.textContent = song.artist;
-    songCover.src = song.cover;
-    audio.src = song.src;
-    audio.load();
-    updateActiveSongUI();
-}
-
-function renderPlaylist() {
-    playlistContainer.innerHTML = "";
-    playlist.forEach((song, index) => {
-        const li = document.createElement("li");
-        li.classList.add("track");
-        if (index === songIndex) li.classList.add("active");
-        li.innerHTML = `
-            <img src="${song.cover}" alt="cover" class="track-img">
-            <div class="track-info">
-                <span class="track-name">${song.title}</span>
-                <span class="track-artist">${song.artist}</span>
-            </div>
-        `;
-        li.addEventListener("click", () => {
-            loadSong(index);
-            audio.play();
-            updatePlayIcon(true);
-        });
-        playlistContainer.appendChild(li);
-    });
-}
-
-function updateActiveSongUI() {
-    const tracks = document.querySelectorAll(".track");
-    tracks.forEach((track, index) => {
-        track.classList.toggle("active", index === songIndex);
-    });
-}
-
-function updatePlayIcon(isPlaying) {
-    if (isPlaying) {
-        playBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="5" width="4" height="14" rx="1"></rect>
-                <rect x="14" y="5" width="4" height="14" rx="1"></rect>
-            </svg>`;
-    } else {
-        playBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"></path>
-            </svg>`;
-    }
-}
-
-playBtn.addEventListener("click", () => {
-    if (audio.paused) {
-        audio.play();
-        updatePlayIcon(true);
-    } else {
-        audio.pause();
-        updatePlayIcon(false);
-    }
-});
-
-function nextTrack() {
-    if (isShuffle) {
-        songIndex = Math.floor(Math.random() * playlist.length);
-    } else {
-        songIndex = (songIndex + 1) % playlist.length;
-    }
-    loadSong(songIndex);
-    audio.play();
-    updatePlayIcon(true);
-}
-
-nextBtn.addEventListener("click", nextTrack);
-prevBtn.addEventListener("click", () => {
-    songIndex = (songIndex - 1 + playlist.length) % playlist.length;
-    loadSong(songIndex);
-    audio.play();
-    updatePlayIcon(true);
-});
-
-shuffleBtn.addEventListener("click", () => {
-    isShuffle = !isShuffle;
-    shuffleBtn.classList.toggle("active-control", isShuffle);
-});
-
-repeatBtn.addEventListener("click", () => {
-    isRepeat = !isRepeat;
-    repeatBtn.classList.toggle("active-control", isRepeat);
-});
-
-audio.addEventListener("ended", () => {
-    if (isRepeat) {
-        audio.currentTime = 0;
-        audio.play();
-    } else {
-        nextTrack();
-    }
-});
-
-progressBar.addEventListener("click", (e) => {
-    const width = progressBar.clientWidth;
-    const clickX = e.offsetX;
-    if (audio.duration) {
-        audio.currentTime = (clickX / width) * audio.duration;
-    }
-});
-
-volumeSlider.addEventListener("input", (e) => {
-    audio.volume = e.target.value;
-});
-
-audio.addEventListener("timeupdate", () => {
-    if (audio.duration) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progressFill.style.width = `${percent}%`;
-        document.getElementById("currentTime").textContent = formatTime(audio.currentTime);
-        document.getElementById("duration").textContent = formatTime(audio.duration);
-    }
-});
-
-function formatTime(time) {
-    const m = Math.floor(time / 60);
-    const s = Math.floor(time % 60);
-    return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-// =========================================
-// 🚀 EVENTOS DE UI Y CAJONES
-// =========================================
-
-// 1. Centralizamos el cierre en una sola función robusta
-function closeAllDrawers() {
-    // Cerramos cajones visualmente
-    playerDrawer.classList.remove("open");
-    if (typeof tasksDrawer !== 'undefined') tasksDrawer.classList.remove("open");
-    if (typeof ambientDrawer !== 'undefined') ambientDrawer.classList.remove("open");
-
-    // Ocultamos el overlay
-    if (typeof drawerOverlay !== 'undefined') {
-        drawerOverlay.classList.remove("active");
-    }
->>>>>>> 54f2f9885e941bc66792e408a96b910ab62a6ee2
 }
 
 soundBtn.addEventListener('click',  () => openDrawer(playerDrawer));
@@ -850,10 +534,4 @@ loadSong(0);
 setMode('pomodoro');
 renderAmbientSliders();
 renderTasks();
-<<<<<<< HEAD
 updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
-=======
-
-// Carga inicial del progreso (SOLO UNA VEZ AQUÍ)
-updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
->>>>>>> 54f2f9885e941bc66792e408a96b910ab62a6ee2
