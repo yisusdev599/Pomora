@@ -172,8 +172,16 @@ function sendNotification(title, body) {
 // 🕒 TEMPORIZADOR
 // =========================================
 function updateDisplay() {
-    minutesEl.textContent = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-    secondsEl.textContent = String(timeLeft % 60).padStart(2, '0');
+    const mm = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    const ss = String(timeLeft % 60).padStart(2, '0');
+    minutesEl.textContent = mm;
+    secondsEl.textContent = ss;
+
+    // Tiempo visible en la pestaña del navegador
+    const activeBtn = document.querySelector('.mode-btn.active');
+    const mode = activeBtn ? activeBtn.dataset.mode : 'pomodoro';
+    const emoji = mode === 'pomodoro' ? '🍊' : (mode === 'short' ? '☕' : '🌿');
+    document.title = isRunning ? `${emoji} ${mm}:${ss} — Pomora` : 'Pomora';
 }
 
 function updateRing() {
@@ -186,6 +194,7 @@ function toggleTimer() {
         isRunning = false;
         startBtn.textContent = '▶ Start Session';
         ring.classList.remove('running');
+        document.title = 'Pomora';
         return;
     }
 
@@ -209,6 +218,7 @@ function toggleTimer() {
         isRunning = false;
         startBtn.textContent = '▶ Start Session';
         ring.classList.remove('running');
+        document.title = 'Pomora';
         playUISound('end');
 
         const activeBtn = document.querySelector('.mode-btn.active');
@@ -522,6 +532,8 @@ resetBtn.addEventListener('click', () => {
     updateDisplay();
     updateRing();
     startBtn.textContent = '▶ Start Session';
+    ring.classList.remove('running');
+    document.title = 'Pomora';
 });
 
 modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
