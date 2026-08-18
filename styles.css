@@ -103,6 +103,20 @@ body {
     100% { transform: translateY(0); }
 }
 
+/* Entrada de la frase motivacional al cambiar */
+@keyframes quoteSwap {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pop de la llama al subir la racha */
+@keyframes flamePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35) rotate(-8deg); }
+    70%  { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
+
 /* =========================================
    3. ESTRUCTURA PRINCIPAL
    ========================================= */
@@ -347,14 +361,158 @@ html.dark-mode .daily-bar { background: rgba(255,255,255,0.08); }
     transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.quote {
-    font-style: italic;
+#modeText.quote-swap { animation: quoteSwap 0.5s ease both; }
+
+/* =========================================
+   8b. STREAK BUTTON (RACHA EN EL HEADER)
+   ========================================= */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.streak-btn {
+    background: var(--box-bg);
+    border: 1px solid var(--border-color);
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     color: var(--text-muted);
-    font-size: 0.86rem;
+    box-shadow: var(--shadow-card);
+    transition: color 0.3s, border-color 0.3s, transform 0.4s ease;
+}
+
+.streak-btn:hover {
+    color: var(--primary);
+    border-color: rgba(244,162,97,0.6);
+    transform: scale(1.08) rotate(-8deg);
+}
+
+/* =========================================
+   8c. STREAK PAGE (PÁGINA DEL ANIMAL)
+   ========================================= */
+.streak-page {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    z-index: 3000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+    padding: 24px;
+}
+
+.streak-page.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.streak-page-card {
+    width: min(430px, 100%);
+    background: var(--box-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 32px;
+    box-shadow: var(--shadow-soft);
+    padding: 44px 34px 36px;
     text-align: center;
-    margin-top: 4px;
-    opacity: 0.72;
-    animation: fadeUp 0.5s ease 0.35s both;
+    position: relative;
+    transform: translateY(18px) scale(0.96);
+    transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.streak-page.open .streak-page-card {
+    transform: translateY(0) scale(1);
+}
+
+.streak-page-card .close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+}
+
+.streak-page-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.75;
+}
+
+.streak-animal {
+    font-size: 5.4rem;
+    line-height: 1;
+    margin: 14px 0 4px;
+    filter: drop-shadow(0 10px 24px rgba(244,162,97,0.35));
+}
+
+.streak-animal.pop { animation: flamePop 0.5s ease; }
+
+.streak-animal-name {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.streak-page-status {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.streak-page-status strong {
+    color: var(--primary);
+    font-weight: 800;
+}
+
+.streak-page-stats {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin: 26px 0 22px;
+}
+
+.streak-page-stats .stat {
+    flex: 1;
+    max-width: 150px;
+    background: var(--btn-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.streak-page-tip {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 /* =========================================
@@ -927,6 +1085,13 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     .app { padding: 22px 16px 52px; gap: 20px; }
 
     .logo-text { font-size: 1.5rem; }
+
+    .header-right { gap: 8px; }
+
+    .streak-btn { width: 40px; height: 40px; }
+    .streak-btn svg { width: 19px; height: 19px; }
+
+    .theme-toggle { width: 40px; height: 40px; }
 
     .mode-btn { padding: 8px 14px; font-size: 0.82rem; }
 
