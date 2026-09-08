@@ -56,12 +56,10 @@ function playUISound(type = 'start') {
 // 🎵 PLAYLIST
 // =========================================
 const playlist = [
-    { title: 'Interstellar Main Theme', artist: 'Interstellar',       cover: 'cover/Interstellar_Cover.jpg', src: 'music/S-T-A-Y.mp3' },
-    { title: 'Lo-Fi Study',             artist: 'Chill Beats',        cover: 'cover/cover2.jpg',             src: 'music/lofi4.mp3' },
-    { title: 'Deep Work',               artist: 'Ambient Nature',     cover: 'cover/cover3.jpg',             src: 'music/lofi7.mp3' },
-    { title: '404 Peace Not Found',     artist: 'Low Signal',         cover: 'cover/cover4.jpg',             src: 'music/404 Peace Not Found.mp3' },
-    { title: 'Heavy Rain',              artist: 'Lofi HipHop',        cover: 'cover/cover5.jpg',             src: 'music/Heavy Rain Lofi HipHop.mp3' },
-    { title: 'Tokyo Lofi Study',        artist: 'Chillhop Music',     cover: 'cover/tokyocover.jpg',         src: 'music/ＴＯＫＹＯ Lofi.mp3' }
+    { title: '404 Peace Not Found',    artist: 'Low Signal',                                   cover: 'cover/6a023637649911b6922123f93fbf0b2c.jpg',          src: 'music/404 Peace Not Found.mp3',                            dur: 1325 },
+    { title: 'S-T-A-Y (Mr Robot Relax)', artist: 'Mr Robot',                                  cover: 'cover/cybercrime-concept-hacker-in-a-dark-mask-photo.jpg', src: 'music/𝗦 𝗧 𝗔 𝗬 with Mr Robot (1 hour music) - Mr Robot Relax.mp3', dur: 3602 },
+    { title: "You're Coding & the Meaning of Life", artist: 'Low Signal',                     cover: 'cover/cover4.jpg',                                      src: "music/you're coding while starting to feel like you've understood the meaning of life .mp3", dur: 3834 },
+    { title: "THATS NOT AN OPTION (Mr Robot Relax)", artist: 'Mr Robot',                       cover: 'cover/wp4507678.jpg',                                  src: 'music/𝗧𝗛𝗔𝗧𝗦 𝗡𝗢𝗧 𝗔𝗡 𝗢𝗣𝗧𝗜𝗢𝗡 with Mr Robot (1 hour music) (playlist) - Mr Robot Relax.mp3', dur: 3612 }
 ];
 
 // =========================================
@@ -78,7 +76,8 @@ let audioCtx = null;
 let masterGain = null;
 let masterVolume = parseFloat(localStorage.getItem('ambient_master_volume')) || 0.8;
 let isAmbientPlaying = false;
-let ambientSoundsData = [];
+const ambientSoundsData = [];
+const pendingVolumes = {};
 
 function ensureAudioContext() {
     if (!audioCtx) {
@@ -87,22 +86,28 @@ function ensureAudioContext() {
         masterGain.gain.value = masterVolume;
         masterGain.connect(audioCtx.destination);
     }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
     return audioCtx;
 }
 
+function getAmbientSound(name) {
+    return ambientSoundsData.find(s => s.name === name);
+}
+
 function isSoundPlaying(sound) {
+    if (!sound) return false;
     if (sound.source) return true;                 // pista Web Audio
     if (sound.audio)  return !sound.audio.paused;  // pista HTMLAudio (respaldo)
     return false;
 }
 
-// Pista con bucle perfecto (sin cortes) usando buffers en memoria
+// Pista con bucle perfecto (buffer en memoria). No hace sonido hasta `start()`
 function makeWebAudioSound(name, buffer) {
     return {
         name,
         buffer,
-        volume: 0.6,
+        ready: true,
+        volume: pendingVolumes[name] != null ? pendingVolumes[name] : 0.6,
         source: null,
         gainNode: null,
         start() {
@@ -111,24 +116,26 @@ function makeWebAudioSound(name, buffer) {
             source.buffer = this.buffer;
             source.loop = true;
             const gain = audioCtx.createGain();
-            gain.gain.value = this.volume * masterVolume;
+            gain.gain.value = 0;                   // arranca en silencio
             source.connect(gain);
             gain.connect(masterGain);
             source.start(0);
             this.source = source;
             this.gainNode = gain;
+            this.setVolume(this.volume);
         },
         stop() {
             if (!this.source) return;
             try { this.source.stop(); } catch (e) {}
             this.source.disconnect();
+            this.gainNode.disconnect();
             this.source = null;
-            if (this.gainNode) this.gainNode.disconnect();
             this.gainNode = null;
         },
         setVolume(v) {
             this.volume = v;
             if (this.gainNode && audioCtx) {
+                this.gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
                 this.gainNode.gain.setTargetAtTime(v * masterVolume, audioCtx.currentTime, 0.05);
             }
         }
@@ -137,15 +144,18 @@ function makeWebAudioSound(name, buffer) {
 
 // Pista de respaldo con HTMLAudio (file:// o CORS bloqueado)
 function makeHtmlAudioSound(name, src) {
-    const audio = new Audio(src);
-    audio.loop = true;
-    audio.preload = 'auto';
-    return {
+    const audioEl = new Audio(src);
+    audioEl.loop = true;
+    audioEl.preload = 'auto';
+    const sound = {
         name,
-        audio,
-        volume: 0.6,
+        audio: audioEl,
+        ready: true,
+        volume: pendingVolumes[name] != null ? pendingVolumes[name] : 0.6,
+        hasWebAudio: false,
         start() {
-            if (this.audio.paused) this.audio.play().catch(() => {});
+            this.audio.volume = this.volume * masterVolume;
+            this.audio.play().catch(() => {});
         },
         stop() {
             this.audio.pause();
@@ -156,27 +166,48 @@ function makeHtmlAudioSound(name, src) {
             this.audio.volume = v * masterVolume;
         }
     };
+    return sound;
 }
 
 function applyMasterVolume() {
     ambientSoundsData.forEach(s => s.setVolume(s.volume));
 }
 
-async function loadAmbientSounds() {
-    ensureAudioContext();
-    await Promise.all(ambientSoundList.map(async s => {
+// Precarga no bloqueante: decodifica en un OfflineAudioContext (no hace
+// sonar nada ni crea el AudioContext real). Si falla, usa HTMLAudio.
+async function preloadAmbientSounds() {
+    renderAmbientSliders();
+    let offline = null;
+    try {
+        const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (OC) offline = new OC(2, 1, 44100);
+    } catch (e) { offline = null; }
+
+    const results = await Promise.all(ambientSoundList.map(async meta => {
+        let buffer = null;
         try {
-            const res = await fetch(s.src);
+            const res = await fetch(meta.src);
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const arrayBuffer = await res.arrayBuffer();
-            const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-            ambientSoundsData.push(makeWebAudioSound(s.name, decoded));
-        } catch (e) {
-            // No se pudo leer con fetch: usamos HTMLAudio como respaldo
-            ambientSoundsData.push(makeHtmlAudioSound(s.name, s.src));
-        }
+            if (offline) buffer = await offline.decodeAudioData(arrayBuffer);
+        } catch (e) { buffer = null; }
+        return { name: meta.name, buffer, src: meta.src };
     }));
+
+    ambientSoundsData.push(...results.map(r =>
+        r.buffer
+            ? makeWebAudioSound(r.name, r.buffer)
+            : makeHtmlAudioSound(r.name, r.src)
+    ));
+    applyMasterVolume();
     renderAmbientSliders();
+}
+
+function updateAmbientStates() {
+    ambientSoundsData.forEach(sound => {
+        if (isAmbientPlaying && sound.volume > 0) sound.start();
+        else sound.stop();
+    });
 }
 
 // =========================================
@@ -199,14 +230,22 @@ const repeatBtn        = document.getElementById('repeatBtn');
 const volumeSlider     = document.getElementById('volumeSlider');
 const progressBar      = document.querySelector('.progress-bar');
 const progressFill     = document.getElementById('progressFill');
+const progressHover    = document.querySelector('.progress-hover');
+const progressTooltip  = document.getElementById('progressTooltip');
 const songTitle        = document.getElementById('song-title');
 const songArtist       = document.getElementById('song-artist');
 const songCover        = document.getElementById('song-cover');
 const playlistContainer = document.getElementById('playlist');
+const queueBox          = document.getElementById('queueBox');
+const playlistToggle    = document.getElementById('playlistToggle');
+const playlistCount     = document.getElementById('playlistCount');
 
-const playerDrawer   = document.getElementById('playerDrawer');
-const soundBtn       = document.getElementById('soundBtn');
-const closePlayer    = document.getElementById('closePlayer');
+const playerPanel   = document.getElementById('playerPanel');
+const soundBtn      = document.getElementById('soundBtn');
+const studio        = document.querySelector('.studio');
+const spatialBtn    = document.getElementById('spatialBtn');
+const rewindBtn     = document.getElementById('rewindBtn');
+const forwardBtn    = document.getElementById('forwardBtn');
 
 const ambientDrawer          = document.getElementById('ambientDrawer');
 const ambientBtn             = document.getElementById('ambientkBtn');
@@ -529,24 +568,29 @@ function loadSong(index) {
     songCover.classList.remove('swap');
     void songCover.offsetWidth; // reflow para reiniciar
     songCover.classList.add('swap');
-    updateActiveSongUI();
+    renderPlaylist();
 }
 
 function renderPlaylist() {
     playlistContainer.innerHTML = '';
-    playlist.forEach((song, index) => {
+    // Cola estilo YouTube Music: empieza por la canción actual y sigue el ciclo
+    const queue = [...playlist.slice(songIndex), ...playlist.slice(0, songIndex)];
+    if (playlistCount) playlistCount.textContent = `${playlist.length} pistas`;
+    queue.forEach((song, qIndex) => {
+        const actualIndex = (songIndex + qIndex) % playlist.length;
         const li = document.createElement('li');
         li.classList.add('track');
-        if (index === songIndex) li.classList.add('active');
+        if (qIndex === 0) li.classList.add('active');
         li.innerHTML = `
             <img src="${song.cover}" alt="portada" class="track-img" loading="lazy">
             <div class="track-info">
                 <span class="track-name">${song.title}</span>
                 <span class="track-artist">${song.artist}</span>
             </div>
+            <span class="track-duration">${song.dur ? formatTime(song.dur) : ''}</span>
         `;
         li.addEventListener('click', () => {
-            loadSong(index);
+            loadSong(actualIndex);
             audio.play();
             updatePlayIcon(true);
         });
@@ -582,6 +626,17 @@ playBtn.addEventListener('click', () => {
 
 nextBtn.addEventListener('click', nextTrack);
 
+// Salto ±10 s (estilo YouTube Music)
+const SEEK_SECONDS = 10;
+
+rewindBtn.addEventListener('click', () => {
+    audio.currentTime = Math.max(0, audio.currentTime - SEEK_SECONDS);
+});
+
+forwardBtn.addEventListener('click', () => {
+    audio.currentTime = Math.min(audio.duration || Infinity, audio.currentTime + SEEK_SECONDS);
+});
+
 prevBtn.addEventListener('click', () => {
     // Si llevamos más de 3 s en la canción, volvemos al inicio; si no, canción anterior
     if (audio.currentTime > 3) {
@@ -609,9 +664,31 @@ audio.addEventListener('ended', () => {
     else          { nextTrack(); }
 });
 
-progressBar.addEventListener('click', e => {
+function seekFromEvent(e) {
     if (!audio.duration) return;
-    audio.currentTime = (e.offsetX / progressBar.clientWidth) * audio.duration;
+    const rect = progressBar.getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+    audio.currentTime = (x / rect.width) * audio.duration;
+}
+
+function previewHover(e) {
+    if (!progressBar) return;
+    const rect = progressBar.getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+    const pct = rect.width ? x / rect.width : 0;
+    if (progressHover) progressHover.style.width = `${pct * 100}%`;
+    if (progressTooltip) {
+        const t = audio.duration ? pct * audio.duration : 0;
+        progressTooltip.textContent = formatTime(t);
+        const half = progressTooltip.offsetWidth / 2;
+        progressTooltip.style.left = `${Math.min(Math.max(x, half + 5), rect.width - half - 5)}px`;
+    }
+}
+
+progressBar.addEventListener('click', seekFromEvent);
+progressBar.addEventListener('mousemove', previewHover);
+progressBar.addEventListener('mouseleave', () => {
+    if (progressHover) progressHover.style.width = '0%';
 });
 
 volumeSlider.addEventListener('input', e => { audio.volume = e.target.value; });
@@ -630,6 +707,113 @@ function formatTime(t) {
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60);
     return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// =========================================
+// 🎧 AUDIO 8D (paneo circular automático con Web Audio)
+// =========================================
+let spatialCtx     = null;
+let spatialSrc     = null;
+let spatialDry     = null;
+let spatialWet     = null;
+let spatialPanner  = null;
+let spatialActive  = false;
+
+function ensureSpatialChain() {
+    if (spatialCtx) return;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    spatialCtx = new Ctor();
+    spatialSrc = spatialCtx.createMediaElementSource(audio);
+
+    // Ruta seca mínima (evita que el sonido desaparezca al girar)
+    spatialDry = spatialCtx.createGain();
+    spatialDry.gain.value = 1;
+    spatialSrc.connect(spatialDry);
+    spatialDry.connect(spatialCtx.destination);
+
+    // Ruta 8D: fuente HRTF que orbita alrededor del oyente + eco de sala
+    spatialPanner = spatialCtx.createPanner();
+    spatialPanner.panningModel = 'HRTF';
+    spatialPanner.distanceModel = 'linear';
+    spatialPanner.refDistance = 1;
+    spatialPanner.maxDistance = 10000;
+    spatialPanner.rolloffFactor = 1;
+    spatialPanner.dopplerFactor = 0;
+    spatialPanner.positionX.value = 0;
+    spatialPanner.positionY.value = 0;
+    spatialPanner.positionZ.value = 0.4;
+
+    const echoDelay = spatialCtx.createDelay(1);
+    echoDelay.delayTime.value = 0.3;
+    const echoFeed = spatialCtx.createGain();
+    echoFeed.gain.value = 0.30;
+    const echoLP = spatialCtx.createBiquadFilter();
+    echoLP.type = 'lowpass';
+    echoLP.frequency.value = 1500;
+    echoDelay.connect(echoLP);
+    echoLP.connect(echoFeed);
+    echoFeed.connect(echoDelay);
+
+    spatialWet = spatialCtx.createGain();
+    spatialWet.gain.value = 0;
+
+    // Compresor para que el 8D suene lleno y sin picos ni cortes
+    const comp = spatialCtx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.knee.value = 26;
+    comp.ratio.value = 5;
+    comp.attack.value = 0.004;
+    comp.release.value = 0.22;
+
+    spatialSrc.connect(spatialPanner);
+    spatialPanner.connect(echoDelay);
+    spatialPanner.connect(spatialWet);
+    echoDelay.connect(spatialWet);
+    spatialWet.connect(comp);
+    comp.connect(spatialCtx.destination);
+
+    // Órbita circular: sin(seno) en X y coseno (desfasado 90°) en Y
+    const lfoX = spatialCtx.createOscillator();
+    lfoX.type = 'sine';
+    lfoX.frequency.value = 0.13;
+    const lfoY = spatialCtx.createOscillator();
+    lfoY.type = 'sine';
+    lfoY.frequency.value = 0.13;
+    const orbitX = spatialCtx.createGain();
+    orbitX.gain.value = 1.4;
+    const orbitY = spatialCtx.createGain();
+    orbitY.gain.value = 1.4;
+    lfoX.connect(orbitX);
+    orbitX.connect(spatialPanner.positionX);
+    lfoY.connect(orbitY);
+    orbitY.connect(spatialPanner.positionY);
+    lfoX.start();
+    // Inicia Y un cuarto de periodo después para trazar un círculo real
+    lfoY.start(spatialCtx.currentTime + (0.25 / 0.13));
+}
+
+function setSpatial(on) {
+    if (!on) {
+        spatialActive = false;
+        if (spatialCtx) {
+            const t = spatialCtx.currentTime;
+            if (spatialDry) spatialDry.gain.setTargetAtTime(1, t, 0.15);
+            if (spatialWet) spatialWet.gain.setTargetAtTime(0, t, 0.15);
+        }
+        if (spatialBtn) spatialBtn.classList.remove('active');
+        return;
+    }
+    ensureSpatialChain();
+    if (spatialCtx.state === 'suspended') spatialCtx.resume();
+    spatialActive = true;
+    const t = spatialCtx.currentTime;
+    spatialDry.gain.setTargetAtTime(0.18, t, 0.3);
+    spatialWet.gain.setTargetAtTime(1, t, 0.3);
+    if (spatialBtn) spatialBtn.classList.add('active');
+}
+
+if (spatialBtn) {
+    spatialBtn.addEventListener('click', () => setSpatial(!spatialActive));
 }
 
 // =========================================
@@ -654,23 +838,23 @@ function renderAmbientSliders() {
     });
     ambientControlsContainer.appendChild(masterWrapper);
 
-    ambientSoundsData.forEach(sound => {
+    ambientSoundList.forEach(meta => {
+        const sound = getAmbientSound(meta.name);
+        const vol = sound ? sound.volume : (pendingVolumes[meta.name] != null ? pendingVolumes[meta.name] : 0.6);
         const wrapper = document.createElement('div');
         wrapper.className = 'ambient-slider-wrapper';
         wrapper.innerHTML = `
-            <label>${sound.name}</label>
-            <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${sound.volume}">
+            <label>${meta.name} <span class="ambient-status ${sound ? 'ok' : 'loading'}">${sound ? '' : 'Cargando…'}</span></label>
+            <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${vol}">
         `;
         const slider = wrapper.querySelector('.ambient-slider');
         slider.addEventListener('input', e => {
-            const vol = parseFloat(e.target.value);
-            sound.setVolume(vol);
-
-            if (vol > 0 && isAmbientPlaying && !isSoundPlaying(sound)) {
-                sound.start();
-            } else if (vol === 0) {
-                sound.stop();
-            }
+            const v = parseFloat(e.target.value);
+            const s = getAmbientSound(meta.name);
+            if (!s) { pendingVolumes[meta.name] = v; return; }
+            s.setVolume(v);
+            if (v > 0 && isAmbientPlaying && !isSoundPlaying(s)) s.start();
+            else if (v === 0) s.stop();
         });
         ambientControlsContainer.appendChild(wrapper);
     });
@@ -681,11 +865,7 @@ toggleAmbientPlayBtn.addEventListener('click', () => {
     ensureAudioContext();
     isAmbientPlaying = !isAmbientPlaying;
     toggleAmbientPlayBtn.classList.toggle('active', isAmbientPlaying);
-
-    ambientSoundsData.forEach(sound => {
-        if (isAmbientPlaying && sound.volume > 0) sound.start();
-        else sound.stop();
-    });
+    updateAmbientStates();
 });
 
 ambientBtn.addEventListener('click', () => {
@@ -756,15 +936,51 @@ function openDrawer(drawer) {
 }
 
 function closeAllDrawers() {
-    playerDrawer.classList.remove('open');
     tasksDrawer.classList.remove('open');
     ambientDrawer.classList.remove('open');
     if (streakPage) streakPage.classList.remove('open');
     drawerOverlay.classList.remove('active');
 }
 
-soundBtn.addEventListener('click',  () => openDrawer(playerDrawer));
-closePlayer.addEventListener('click', closeAllDrawers);
+let closeTimer = null;
+function finishPlayerClose() {
+    if (playerPanel.classList.contains('collapsed')) return;
+    playerPanel.classList.remove('closing');
+    playerPanel.classList.add('collapsed');
+    if (studio) studio.classList.remove('player-open');
+}
+function setCollapsed(collapsed) {
+    clearTimeout(closeTimer);
+    if (collapsed) {
+        if (playerPanel.classList.contains('collapsed') ||
+            playerPanel.classList.contains('closing')) return;
+        playerPanel.classList.add('closing');
+        playerPanel.addEventListener('animationend', function h(e) {
+            if (e.animationName === 'playerOut') finishPlayerClose();
+        });
+        closeTimer = setTimeout(finishPlayerClose, 350);
+    } else {
+        playerPanel.classList.remove('closing', 'collapsed');
+        if (studio) studio.classList.add('player-open');
+        playerPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+soundBtn.addEventListener('click', () => {
+    setCollapsed(!playerPanel.classList.contains('collapsed'));
+});
+
+const playerCloseBtn = document.getElementById('playerCloseBtn');
+if (playerCloseBtn) {
+    playerCloseBtn.addEventListener('click', () => setCollapsed(true));
+}
+
+if (playlistToggle && queueBox) {
+    playlistToggle.addEventListener('click', () => {
+        const closed = queueBox.classList.toggle('collapsed');
+        playlistToggle.setAttribute('aria-expanded', String(!closed));
+    });
+}
 
 taskBtn.addEventListener('click',   () => openDrawer(tasksDrawer));
 closeTasks.addEventListener('click', closeAllDrawers);
@@ -774,18 +990,7 @@ closeStreak.addEventListener('click', closeStreakPage);
 
 drawerOverlay.addEventListener('click', closeAllDrawers);
 
-// ─── Swipe hacia abajo para cerrar el player en móvil ───────────────────────
-(function addSwipeToClose() {
-    let startY = 0;
-    playerDrawer.addEventListener('touchstart', e => {
-        startY = e.touches[0].clientY;
-    }, { passive: true });
-
-    playerDrawer.addEventListener('touchend', e => {
-        const dy = e.changedTouches[0].clientY - startY;
-        if (dy > 80) closeAllDrawers(); // swipe hacia abajo ≥ 80px cierra
-    }, { passive: true });
-})();
+// ─── El player ahora es un panel integrado (no drawer) ──────────────────────
 
 // =========================================
 // ⏱ CONTROLES DEL TIMER
@@ -811,7 +1016,7 @@ modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.datas
 renderPlaylist();
 loadSong(0);
 setMode('pomodoro');
-loadAmbientSounds();
+preloadAmbientSounds();
 renderTasks();
 updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
 
