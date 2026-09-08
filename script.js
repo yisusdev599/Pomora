@@ -593,6 +593,7 @@ function renderPlaylist() {
             loadSong(actualIndex);
             audio.play();
             updatePlayIcon(true);
+            closeQueue();
         });
         playlistContainer.appendChild(li);
     });
@@ -975,11 +976,19 @@ if (playerCloseBtn) {
     playerCloseBtn.addEventListener('click', () => setCollapsed(true));
 }
 
-if (playlistToggle && queueBox) {
+if (playlistToggle && queueBox && playerPanel) {
     playlistToggle.addEventListener('click', () => {
-        const closed = queueBox.classList.toggle('collapsed');
-        playlistToggle.setAttribute('aria-expanded', String(!closed));
+        const isOpen = playerPanel.classList.toggle('queue-open');
+        queueBox.classList.toggle('queue-open', isOpen);
+        playlistToggle.setAttribute('aria-expanded', String(isOpen));
     });
+}
+
+function closeQueue() {
+    if (!playerPanel || !queueBox) return;
+    playerPanel.classList.remove('queue-open');
+    queueBox.classList.remove('queue-open');
+    if (playlistToggle) playlistToggle.setAttribute('aria-expanded', 'false');
 }
 
 taskBtn.addEventListener('click',   () => openDrawer(tasksDrawer));

@@ -823,17 +823,23 @@ html.dark-mode .player-panel {
 .player-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 8px;
 }
 
 .player-head-label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-dim);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: 1px;
+    text-transform: none;
+    color: #000;
     white-space: nowrap;
+}
+
+html.dark-mode .player-head-label {
+    color: #fff;
 }
 
 .player-close {
@@ -1196,6 +1202,43 @@ html:not(.dark-mode) .play:hover {
 /* Cola colapsada (estilo YouTube Music) */
 .playlist-container.collapsed .playlist-chevron { transform: rotate(-90deg); }
 .playlist-container.collapsed .playlist { display: none; }
+
+/* Estado por defecto: cola cerrada, solo se ve el encabezado (estilo YouTube Music) */
+.playlist-container .playlist { display: none; }
+
+.playlist-container.queue-open .playlist {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+}
+
+/* Cola a pantalla completa dentro del panel: se oculta el reproductor */
+.player-panel:not(.queue-open) .playlist-chevron { transform: rotate(-90deg); }
+
+.player-panel.queue-open {
+    min-height: 480px;
+}
+
+.player-panel.queue-open .player-content {
+    height: 100%;
+    min-height: 0;
+}
+
+.player-panel.queue-open .player-head,
+.player-panel.queue-open .player-top,
+.player-panel.queue-open .progress-section,
+.player-panel.queue-open .music-controls,
+.player-panel.queue-open .volume-row {
+    display: none;
+}
+
+.player-panel.queue-open .playlist-container {
+    flex: 1;
+    min-height: 0;
+    border-top: none;
+    padding-top: 10px;
+}
 
 .playlist {
     list-style: none;
