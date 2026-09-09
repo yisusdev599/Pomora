@@ -116,7 +116,7 @@ function makeWebAudioSound(name, buffer) {
             source.buffer = this.buffer;
             source.loop = true;
             const gain = audioCtx.createGain();
-            gain.gain.value = 0;                   // arranca en silencio
+            gain.gain.value = 0;                   // Arranca en silencio y se ajusta con `setVolume()`
             source.connect(gain);
             gain.connect(masterGain);
             source.start(0);
