@@ -56,10 +56,10 @@ function playUISound(type = 'start') {
 // 🎵 PLAYLIST
 // =========================================
 const playlist = [
-    { title: '404 Peace Not Found',    artist: 'Low Signal',                                   cover: 'cover/6a023637649911b6922123f93fbf0b2c.jpg',          src: 'music/404 Peace Not Found.mp3',                            dur: 1325 },
-    { title: 'S-T-A-Y (Mr Robot Relax)', artist: 'Mr Robot',                                  cover: 'cover/cybercrime-concept-hacker-in-a-dark-mask-photo.jpg', src: 'music/𝗦 𝗧 𝗔 𝗬 with Mr Robot (1 hour music) - Mr Robot Relax.mp3', dur: 3602 },
-    { title: "You're Coding & the Meaning of Life", artist: 'Low Signal',                     cover: 'cover/cover4.jpg',                                      src: "music/you're coding while starting to feel like you've understood the meaning of life .mp3", dur: 3834 },
-    { title: "THATS NOT AN OPTION (Mr Robot Relax)", artist: 'Mr Robot',                       cover: 'cover/wp4507678.jpg',                                  src: 'music/𝗧𝗛𝗔𝗧𝗦 𝗡𝗢𝗧 𝗔𝗡 𝗢𝗣𝗧𝗜𝗢𝗡 with Mr Robot (1 hour music) (playlist) - Mr Robot Relax.mp3', dur: 3612 }
+    { title: '404 Peace Not Found',    artist: 'Low Signal',                                   cover: 'cover/6a023637649911b6922123f93fbf0b2c.jpg',          src: 'https://pub-4e196cfc28974ad5b3013d003fc0d0b3.r2.dev/music/404%20Peace%20Not%20Found.mp3',                            dur: 1325 },
+    { title: 'S-T-A-Y (Mr Robot Relax)', artist: 'Mr Robot',                                  cover: 'cover/cybercrime-concept-hacker-in-a-dark-mask-photo.jpg', src: 'https://pub-4e196cfc28974ad5b3013d003fc0d0b3.r2.dev/music/%F0%9D%97%A6%20%F0%9D%97%A7%F0%9D%97%94%F0%9D%97%AC%20with%20Mr%20Robot%20(1%20hour%20music)%20-%20Mr%20Robot%20Relax.mp3', dur: 3602 },
+    { title: "You're Coding & the Meaning of Life", artist: 'Low Signal',                     cover: 'cover/cover4.jpg',                                      src: "https://pub-4e196cfc28974ad5b3013d003fc0d0b3.r2.dev/music/you're%20coding%20while%20starting%20to%20feel%20like%20you've%20understood%20the%20meaning%20of%20life%20.mp3", dur: 3834 },
+    { title: "THATS NOT AN OPTION (Mr Robot Relax)", artist: 'Mr Robot',                       cover: 'cover/wp4507678.jpg',                                  src: 'https://pub-4e196cfc28974ad5b3013d003fc0d0b3.r2.dev/music/%F0%9D%97%A7%F0%9D%97%9B%F0%9D%97%A4%F0%9D%97%A7%F0%9D%97%A6%20%F0%9D%97%A1%F0%9D%97%A2%F0%9D%97%A7%20%F0%9D%97%A7%F0%9D%97%A1%20%F0%9D%97%A2%F0%9D%97%A3%F0%9D%97%A7%F0%9D%97%9C%F0%9D%97%A2%F0%9D%97%A1%20with%20Mr%20Robot%20(1%20hour%20music)%20(playlist)%20-%20Mr%20Robot%20Relax.mp3', dur: 3612 }
 ];
 
 // =========================================
