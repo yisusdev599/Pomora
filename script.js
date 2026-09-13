@@ -67,11 +67,19 @@ const playlist = [
 // =========================================
 // 🌲 SONIDOS AMBIENTALES (Web Audio API)
 // =========================================
+const AMBIENT_ICONS = {
+    master: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+    rain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>',
+    forest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l5 6h-2.5L19 16H5l4.5-7H7z"/><path d="M12 16v5"/></svg>',
+    thunder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/></svg>',
+    wind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></svg>'
+};
+
 const ambientSoundList = [
-    { name: 'Rain',    src: 'sounds/rain.wav' },
-    { name: 'Forest',  src: 'sounds/forest.wav' },
-    { name: 'Thunder', src: 'sounds/thunder.wav' },
-    { name: 'Wind',    src: 'sounds/wind.wav' }
+    { name: 'Lluvia',    src: 'sounds/rain.wav',    icon: AMBIENT_ICONS.rain },
+    { name: 'Bosque',    src: 'sounds/forest.wav',  icon: AMBIENT_ICONS.forest },
+    { name: 'Tormenta',  src: 'sounds/thunder.wav', icon: AMBIENT_ICONS.thunder },
+    { name: 'Viento',    src: 'sounds/wind.wav',    icon: AMBIENT_ICONS.wind }
 ];
 
 let audioCtx = null;
@@ -252,17 +260,13 @@ const forwardBtn    = document.getElementById('forwardBtn');
 const ambientDrawer          = document.getElementById('ambientDrawer');
 const ambientBtn             = document.getElementById('ambientkBtn');
 const closeAmbient           = document.getElementById('closeAmbient');
-const toggleAmbientPlayBtn   = document.getElementById('play-ambientkBtn');
 const ambientControlsContainer = document.getElementById('ambientControls');
 
 const taskBtn       = document.getElementById('taskBtn');
 const tasksDrawer   = document.getElementById('tasksDrawer');
 const closeTasks    = document.getElementById('closeTasks');
 const drawerOverlay = document.getElementById('drawerOverlay');
-const taskInput     = document.getElementById('taskInput');
-const addTaskBtn    = document.getElementById('addTask');
-const tasksList     = document.getElementById('tasksList');
-const completedCount = document.getElementById('completedCount');
+const tasksBoard    = document.getElementById('tasksBoard');
 
 const streakPage  = document.getElementById('streakPage');
 const streakBtn   = document.getElementById('streakBtn');
@@ -271,6 +275,8 @@ const closeStreak = document.getElementById('closeStreak');
 // =========================================
 // ⚙️ ESTADO
 // =========================================
+const TXT_START = '▶ Iniciar';
+const TXT_PAUSE = '⏸ Pausar';
 let timer     = null;
 let totalTime = 25 * 60;
 let timeLeft  = totalTime;
@@ -458,7 +464,7 @@ function toggleTimer() {
     if (isRunning) {
         clearInterval(timer);
         isRunning = false;
-        startBtn.textContent = '▶ Start Session';
+        startBtn.textContent = TXT_START;
         ring.classList.remove('running');
         document.title = 'Pomora';
         return;
@@ -468,7 +474,7 @@ function toggleTimer() {
     requestNotificationPermission();
     playUISound('start');
     isRunning = true;
-    startBtn.textContent = '⏸ Pause Session';
+    startBtn.textContent = TXT_PAUSE;
     ring.classList.add('running');
 
     timer = setInterval(() => {
@@ -482,7 +488,7 @@ function toggleTimer() {
         // Tiempo agotado
         clearInterval(timer);
         isRunning = false;
-        startBtn.textContent = '▶ Start Session';
+        startBtn.textContent = TXT_START;
         ring.classList.remove('running');
         document.title = 'Pomora';
         playUISound('end');
@@ -530,7 +536,7 @@ function setMode(mode, keepRunning = false) {
 
     clearInterval(timer);
     isRunning = false;
-    startBtn.textContent = '▶ Start Session';
+    startBtn.textContent = TXT_START;
 
     modeButtons.forEach(btn => btn.classList.remove('active'));
     const targetBtn = document.querySelector(`[data-mode="${mode}"]`);
@@ -822,54 +828,94 @@ if (spatialBtn) {
 // =========================================
 // 🌲 SONIDOS AMBIENTALES
 // =========================================
+function applySliderFill(slider) {
+    const v = parseFloat(slider.value);
+    const max = parseFloat(slider.max) || 1;
+    const pct = (v / max) * 100;
+    slider.style.background =
+        `linear-gradient(90deg, var(--primary) 0%, var(--primary) ${pct}%, var(--slider-track) ${pct}%, var(--slider-track) 100%)`;
+}
+
+function buildAmbientRow({ icon, name, value, loaded = true, onInput }) {
+    const row = document.createElement('div');
+    row.className = 'ambient-row';
+    row.innerHTML = `
+        <span class="ambient-icon">${icon}</span>
+        <span class="ambient-name">${name}</span>
+        <span class="ambient-status ${loaded ? 'ok' : 'loading'}">${loaded ? '' : 'Cargando…'}</span>
+        <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${value}">
+    `;
+    const slider = row.querySelector('.ambient-slider');
+    applySliderFill(slider);
+    slider.addEventListener('input', e => {
+        const val = parseFloat(e.target.value);
+        applySliderFill(slider);
+        onInput(val);
+    });
+    return row;
+}
+
+function updateAmbientRowsState() {
+    document.querySelectorAll('.ambient-row').forEach(row => {
+        const nameEl = row.querySelector('.ambient-name');
+        if (!nameEl) return;
+        const sound = getAmbientSound(nameEl.textContent);
+        const playing = isAmbientPlaying && sound && sound.volume > 0 && isSoundPlaying(sound);
+        row.classList.toggle('playing', playing);
+    });
+}
+
 function renderAmbientSliders() {
     ambientControlsContainer.innerHTML = '';
 
-    // Volumen general (master)
-    const masterWrapper = document.createElement('div');
-    masterWrapper.className = 'ambient-slider-wrapper';
-    masterWrapper.innerHTML = `
-        <label>Volumen general</label>
-        <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${masterVolume}">
-    `;
-    const masterSlider = masterWrapper.querySelector('.ambient-slider');
-    masterSlider.addEventListener('input', e => {
-        masterVolume = parseFloat(e.target.value);
-        localStorage.setItem('ambient_master_volume', masterVolume);
-        if (masterGain && audioCtx) masterGain.gain.setTargetAtTime(masterVolume, audioCtx.currentTime, 0.05);
-        applyMasterVolume();
-    });
-    ambientControlsContainer.appendChild(masterWrapper);
+    ambientControlsContainer.appendChild(buildAmbientRow({
+        icon: AMBIENT_ICONS.master,
+        name: 'General',
+        value: masterVolume,
+        onInput: v => {
+            masterVolume = v;
+            localStorage.setItem('ambient_master_volume', masterVolume);
+            if (masterGain && audioCtx) masterGain.gain.setTargetAtTime(masterVolume, audioCtx.currentTime, 0.05);
+            applyMasterVolume();
+        }
+    }));
 
     ambientSoundList.forEach(meta => {
         const sound = getAmbientSound(meta.name);
         const vol = sound ? sound.volume : (pendingVolumes[meta.name] != null ? pendingVolumes[meta.name] : 0.6);
-        const wrapper = document.createElement('div');
-        wrapper.className = 'ambient-slider-wrapper';
-        wrapper.innerHTML = `
-            <label>${meta.name} <span class="ambient-status ${sound ? 'ok' : 'loading'}">${sound ? '' : 'Cargando…'}</span></label>
-            <input type="range" class="ambient-slider" min="0" max="1" step="0.05" value="${vol}">
-        `;
-        const slider = wrapper.querySelector('.ambient-slider');
-        slider.addEventListener('input', e => {
-            const v = parseFloat(e.target.value);
-            const s = getAmbientSound(meta.name);
-            if (!s) { pendingVolumes[meta.name] = v; return; }
-            s.setVolume(v);
-            if (v > 0 && isAmbientPlaying && !isSoundPlaying(s)) s.start();
-            else if (v === 0) s.stop();
-        });
-        ambientControlsContainer.appendChild(wrapper);
+        ambientControlsContainer.appendChild(buildAmbientRow({
+            icon: meta.icon,
+            name: meta.name,
+            value: vol,
+            loaded: !!sound,
+            onInput: v => {
+                const s = getAmbientSound(meta.name);
+                if (!s) { pendingVolumes[meta.name] = v; return; }
+                s.setVolume(v);
+                if (v > 0 && isAmbientPlaying && !isSoundPlaying(s)) s.start();
+                else if (v === 0) s.stop();
+                updateAmbientRowsState();
+            }
+        }));
     });
+    updateAmbientRowsState();
 }
 
 // Play/pause global: solo suenan las pistas con volumen > 0
-toggleAmbientPlayBtn.addEventListener('click', () => {
+function toggleAmbientPlay() {
     ensureAudioContext();
     isAmbientPlaying = !isAmbientPlaying;
-    toggleAmbientPlayBtn.classList.toggle('active', isAmbientPlaying);
+    const mp = document.getElementById('ambientMasterPlay');
+    if (mp) {
+        mp.classList.toggle('active', isAmbientPlaying);
+        mp.textContent = isAmbientPlaying ? '⏸ Pausar mezcla' : '▶ Reproducir mezcla';
+    }
     updateAmbientStates();
-});
+    updateAmbientRowsState();
+}
+
+const ambientMasterPlay = document.getElementById('ambientMasterPlay');
+if (ambientMasterPlay) ambientMasterPlay.addEventListener('click', toggleAmbientPlay);
 
 ambientBtn.addEventListener('click', () => {
     ambientDrawer.classList.add('open');
@@ -882,53 +928,348 @@ closeAmbient.addEventListener('click', () => {
 });
 
 // =========================================
-// 📝 TAREAS
+// 📝 NOTAS (TAREAS) — calendario, color, subrayado y recordatorios
 // =========================================
-let tasks = JSON.parse(localStorage.getItem('pomora_tasks')) || [];
+const pad2 = n => String(n).padStart(2, '0');
+const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const WEEKDAYS_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+function toDateKey(d) {
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function toTimeHM(d) {
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function fromDateKey(key) {
+    const [y, m, dd] = key.split('-').map(Number);
+    return new Date(y, m - 1, dd);
+}
+
+function buildReminderIso(dateKey, time) {
+    if (!dateKey || !time) return null;
+    return new Date(`${dateKey}T${time}`).toISOString();
+}
+
+function normalizeTask(t) {
+    let date = t.date || '';
+    let reminderTime = t.reminderTime || null;
+    if (!date && t.reminder) {
+        const d = new Date(t.reminder);
+        date = toDateKey(d);
+        reminderTime = toTimeHM(d);
+    }
+    if (!date) date = toDateKey(new Date());
+    return {
+        id: t.id || `task-${Math.random().toString(36).slice(2, 9)}`,
+        text: String(t.text || ''),
+        completed: !!t.completed,
+        color: t.color || '',
+        underline: !!t.underline,
+        date,
+        reminderTime,
+        reminder: buildReminderIso(date, reminderTime),
+        lead: t.lead === undefined ? 10 : Number(t.lead),
+        fired: !!t.fired
+    };
+}
+
+let tasks = (JSON.parse(localStorage.getItem('pomora_tasks')) || []).map(normalizeTask);
+
+const nowD = new Date();
+let calYear = nowD.getFullYear();
+let calMonth = nowD.getMonth();
+let selectedDate = toDateKey(nowD);
+
+const calendarGrid = document.getElementById('calendarGrid');
+const calendarMonthLabel = document.getElementById('calendarMonthLabel');
+const calendarPrev = document.getElementById('calendarPrev');
+const calendarNext = document.getElementById('calendarNext');
+const selectedDayTitle = document.getElementById('selectedDayTitle');
+const noteCounter = document.getElementById('noteCounter');
+
+function renderDayTitle() {
+    if (!selectedDayTitle) return;
+    const d = fromDateKey(selectedDate);
+    const todayKey = toDateKey(new Date());
+    const yKey = toDateKey(new Date(Date.now() - 86400000));
+    const tmKey = toDateKey(new Date(Date.now() + 86400000));
+    let rel = WEEKDAYS_ES[d.getDay()];
+    if (selectedDate === todayKey) rel = 'Hoy';
+    else if (selectedDate === yKey) rel = 'Ayer';
+    else if (selectedDate === tmKey) rel = 'Mañana';
+    selectedDayTitle.textContent = `${rel} · ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`;
+}
+
+function renderCalendar() {
+    if (!calendarGrid || !calendarMonthLabel) return;
+    calendarGrid.innerHTML = '';
+    const first = new Date(calYear, calMonth, 1);
+    const startIdx = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+    const todayKey = toDateKey(new Date());
+
+    for (let i = 0; i < 42; i++) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'cal-cell';
+        const offset = i - startIdx;
+        let dKey, dayNum;
+        if (offset < 0) {
+            dayNum = prevMonthDays + offset + 1;
+            dKey = toDateKey(new Date(calYear, calMonth - 1, offset + 1));
+            cell.classList.add('muted');
+        } else if (offset >= daysInMonth) {
+            dayNum = offset - daysInMonth + 1;
+            dKey = toDateKey(new Date(calYear, calMonth + 1, dayNum));
+            cell.classList.add('muted');
+        } else {
+            dayNum = offset + 1;
+            dKey = toDateKey(new Date(calYear, calMonth, dayNum));
+        }
+        cell.textContent = dayNum;
+        cell.dataset.date = dKey;
+        if (dKey === todayKey) cell.classList.add('today');
+        if (dKey === selectedDate) cell.classList.add('selected');
+        if (tasks.some(t => t.date === dKey)) {
+            const dot = document.createElement('span');
+            dot.className = 'cal-dot';
+            cell.appendChild(dot);
+        }
+        cell.addEventListener('click', () => {
+            selectedDate = dKey;
+            closeDetail();
+            renderCalendar();
+            renderTasks();
+        });
+        calendarGrid.appendChild(cell);
+    }
+    calendarMonthLabel.textContent = `${MONTHS_ES[calMonth]} ${calYear}`;
+    renderDayTitle();
+}
+
+if (calendarPrev) calendarPrev.addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+});
+
+if (calendarNext) calendarNext.addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+});
 
 function saveTasks() {
     localStorage.setItem('pomora_tasks', JSON.stringify(tasks));
     renderTasks();
 }
 
-function renderTasks() {
-    tasksList.innerHTML = '';
-    let completed = 0;
-    tasks.forEach((task, index) => {
-        const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''}`;
-        li.innerHTML = `
-            <div class="task-info-content">
-                <span class="checkbox">${task.completed ? '✓' : ''}</span>
-                <span class="task-text">${task.text}</span>
-            </div>
-            <button class="delete-task" aria-label="Eliminar tarea">✕</button>
-        `;
-        li.querySelector('.task-info-content').addEventListener('click', () => {
-            tasks[index].completed = !tasks[index].completed;
-            saveTasks();
-        });
-        li.querySelector('.delete-task').addEventListener('click', e => {
-            e.stopPropagation();
-            tasks.splice(index, 1);
-            saveTasks();
-        });
-        tasksList.appendChild(li);
-        if (task.completed) completed++;
+// Colores disponibles para las notas
+const NOTE_COLORS = ['#ffd9a1', '#ffc4d6', '#c9dcff', '#c7efd2', '#e4d9ff', '#ffe98a'];
+
+const boardWrap = document.getElementById('boardWrap');
+const noteDetail = document.getElementById('noteDetail');
+const ndBack = document.getElementById('ndBack');
+const ndTitle = document.getElementById('ndTitle');
+const ndTime = document.getElementById('ndTime');
+const ndLead = document.getElementById('ndLead');
+const ndColors = document.getElementById('ndColors');
+const ndUnderline = document.getElementById('ndUnderline');
+const ndDone = document.getElementById('ndDone');
+const ndDelete = document.getElementById('ndDelete');
+const ndSave = document.getElementById('ndSave');
+const ndTimeHint = document.getElementById('ndTimeHint');
+
+function updateTimeHint() {
+    if (!ndTimeHint) return;
+    ndTimeHint.textContent = ndTime.value ? formatTimeHM(ndTime.value) : '';
+}
+
+let detailTaskId = null;
+let detailColor = '';
+
+function formatTimeHM(hhmm) {
+    if (!hhmm) return '';
+    const [h, m] = hhmm.split(':').map(Number);
+    const ap = h < 12 ? 'AM' : 'PM';
+    return `${h % 12 === 0 ? 12 : h % 12}:${pad2(m)} ${ap}`;
+}
+
+function formatNoteReminder(iso) {
+    const d = new Date(iso);
+    const time = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    const todayKey = toDateKey(new Date());
+    if (toDateKey(d) === todayKey) return `Hoy · ${formatTimeHM(time)}`;
+    return `${d.getDate()} ${MONTHS_ES[d.getMonth()].slice(0, 3)} · ${formatTimeHM(time)}`;
+}
+
+function buildNdColors() {
+    ndColors.innerHTML = '';
+    ['', ...NOTE_COLORS].forEach(c => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'nd-swatch' + (c ? '' : ' none');
+        if (c) b.style.setProperty('--swatch', c);
+        b.dataset.c = c;
+        b.title = c ? 'Usar este color' : 'Sin color';
+        b.addEventListener('click', () => setNdColor(c));
+        ndColors.appendChild(b);
     });
-    if (completedCount) completedCount.textContent = completed;
 }
 
-function addNewTask() {
-    const text = taskInput.value.trim();
-    if (!text) return;
-    tasks.push({ text, completed: false });
-    taskInput.value = '';
+function setNdColor(c) {
+    detailColor = c || '';
+    ndColors.querySelectorAll('.nd-swatch').forEach(b => b.classList.toggle('on', b.dataset.c === detailColor));
+    ndTitle.focus();
+}
+
+function renderTasks() {
+    if (!tasksBoard) return;
+    tasksBoard.innerHTML = '';
+    const dayTasks = tasks
+        .filter(t => t.date === selectedDate)
+        .sort((a, b) => (+a.completed) - (+b.completed));
+
+    if (dayTasks.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'board-empty';
+        empty.textContent = 'La pizarra está vacía · toca "＋ Nueva nota" para empezar';
+        tasksBoard.appendChild(empty);
+    } else {
+        dayTasks.forEach((task) => {
+            const note = document.createElement('div');
+            note.className = `sticky-note${task.completed ? ' completed' : ''}`;
+            note.style.setProperty('--rot', `${((task.id.charCodeAt(task.id.length - 1) || 0) % 5) - 2}deg`);
+            if (task.color) note.style.setProperty('--note-bg', task.color);
+            const isDue = task.reminder && !task.fired && new Date(task.reminder).getTime() <= Date.now();
+            note.innerHTML = `
+                ${task.completed ? '<span class="note-check">✓</span>' : ''}
+                <span class="note-text${task.underline ? ' underline' : ''}"></span>
+                ${task.reminder ? `<span class="note-reminder${isDue ? ' due' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>${formatNoteReminder(task.reminder)}</span>` : ''}
+            `;
+            note.querySelector('.note-text').textContent = task.text;
+            note.addEventListener('click', () => openDetail(task));
+            tasksBoard.appendChild(note);
+        });
+    }
+
+    const newBtn = document.createElement('button');
+    newBtn.type = 'button';
+    newBtn.className = 'new-note';
+    newBtn.innerHTML = '<span class="new-plus">＋</span><span>Nueva nota</span>';
+    newBtn.addEventListener('click', () => openDetail(null));
+    tasksBoard.appendChild(newBtn);
+
+    if (noteCounter) noteCounter.textContent = `${dayTasks.filter(t => t.completed).length} de ${dayTasks.length} completadas`;
+}
+
+function openDetail(task) {
+    detailTaskId = task ? task.id : null;
+    ndTitle.value = task ? task.text : '';
+    ndTime.value = task && task.reminderTime ? task.reminderTime : '';
+    updateTimeHint();
+    ndLead.value = String(task && task.lead !== undefined ? task.lead : 10);
+    ndUnderline.classList.toggle('active', !!(task && task.underline));
+    ndUnderline.setAttribute('aria-pressed', String(!!(task && task.underline)));
+    ndDone.checked = !!(task && task.completed);
+    buildNdColors();
+    setNdColor(task ? task.color : '');
+    ndDelete.style.visibility = detailTaskId ? 'visible' : 'hidden';
+    if (boardWrap) boardWrap.hidden = true;
+    noteDetail.hidden = false;
+    ndTitle.focus();
+}
+
+function closeDetail() {
+    noteDetail.hidden = true;
+    if (boardWrap) boardWrap.hidden = false;
+}
+
+function saveDetail() {
+    const text = ndTitle.value.trim();
+    if (!text) { ndTitle.focus(); return; }
+    const time = ndTime.value || null;
+    const lead = parseInt(ndLead.value, 10);
+    const reminder = buildReminderIso(selectedDate, time);
+    const underline = ndUnderline.classList.contains('active');
+
+    if (detailTaskId) {
+        const task = tasks.find(t => t.id === detailTaskId);
+        if (task) {
+            const timeChanged = reminder !== task.reminder;
+            task.text = text;
+            task.color = detailColor;
+            task.underline = underline;
+            task.completed = ndDone.checked;
+            if (timeChanged) task.fired = false;
+            task.reminderTime = time;
+            task.reminder = reminder;
+            task.lead = lead;
+        }
+    } else {
+        tasks.push({
+            id: `task-${Math.random().toString(36).slice(2, 9)}`,
+            text,
+            color: detailColor,
+            underline,
+            completed: ndDone.checked,
+            date: selectedDate,
+            reminderTime: time,
+            reminder,
+            lead,
+            fired: false
+        });
+    }
+    closeDetail();
     saveTasks();
+    renderCalendar();
 }
 
-addTaskBtn.addEventListener('click', addNewTask);
-taskInput.addEventListener('keypress', e => { if (e.key === 'Enter') addNewTask(); });
+function deleteDetail() {
+    if (!detailTaskId) return;
+    const idx = tasks.findIndex(t => t.id === detailTaskId);
+    if (idx > -1) tasks.splice(idx, 1);
+    closeDetail();
+    saveTasks();
+    renderCalendar();
+}
+
+if (ndBack) ndBack.addEventListener('click', closeDetail);
+if (ndSave) ndSave.addEventListener('click', saveDetail);
+if (ndDelete) ndDelete.addEventListener('click', deleteDetail);
+if (ndTime) ndTime.addEventListener('input', updateTimeHint);
+if (ndUnderline) ndUnderline.addEventListener('click', () => {
+    ndUnderline.classList.toggle('active');
+    ndUnderline.setAttribute('aria-pressed', String(ndUnderline.classList.contains('active')));
+    ndTitle.focus();
+});
+ndTitle.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        saveDetail();
+    }
+});
+
+// ⏰ Revisa recordatorios cada 15 segundos
+function checkReminders() {
+    const now = Date.now();
+    let changed = false;
+    tasks.forEach(t => {
+        if (!t.reminder || t.fired || t.completed) return;
+        const leadMs = (t.lead === undefined ? 10 : Number(t.lead)) * 60000;
+        if (new Date(t.reminder).getTime() - leadMs <= now) {
+            t.fired = true;
+            changed = true;
+            const diffMin = Math.max(0, Math.round((new Date(t.reminder).getTime() - now) / 60000));
+            const prefix = diffMin > 0 ? `En ${diffMin} min · ` : '';
+            sendNotification('Recordatorio', `${prefix}Tu nota: "${t.text.length > 60 ? t.text.slice(0, 57) + '...' : t.text}"`);
+        }
+    });
+    if (changed) saveTasks();
+}
 
 // =========================================
 // 🚀 DRAWERS — APERTURA / CIERRE
@@ -1014,7 +1355,7 @@ resetBtn.addEventListener('click', () => {
     timeLeft = totalTime;
     updateDisplay();
     updateRing();
-    startBtn.textContent = '▶ Start Session';
+    startBtn.textContent = TXT_START;
     ring.classList.remove('running');
     document.title = 'Pomora';
 });
@@ -1028,7 +1369,10 @@ renderPlaylist();
 loadSong(0);
 setMode('pomodoro');
 preloadAmbientSounds();
+renderCalendar();
 renderTasks();
+checkReminders();
+setInterval(checkReminders, 15000);
 updateDailyProgress(Math.round((sessionsCompletedToday / SESSIONS_GOAL) * 100));
 
 // Rotar frase motivacional cada 20 segundos

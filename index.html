@@ -72,8 +72,8 @@
 
                 <nav class="mode-selector">
                     <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
-                    <button class="mode-btn" data-mode="short">Short Break</button>
-                    <button class="mode-btn" data-mode="long">Long Break</button>
+                    <button class="mode-btn" data-mode="short">Descanso Corto</button>
+                    <button class="mode-btn" data-mode="long">Descanso Largo</button>
                 </nav>
 
                 <section class="timer-section">
@@ -90,13 +90,13 @@
                 </section>
 
                 <section class="controls">
-                    <button id="startBtn" class="primary-btn"> ▶ Start Session</button>
+                    <button id="startBtn" class="primary-btn"> ▶ Iniciar</button>
                     <button id="resetBtn" class="secondary-btn">⟳</button>
                 </section>
 
                 <section class="daily-progress">
                     <div class="daily-header">
-                        <span class="daily-title">Daily Progress</span>
+                        <span class="daily-title">Progreso Diario</span>
                         <span id="dailyPercent">0%</span>
                     </div>
                     <div class="daily-bar">
@@ -112,14 +112,6 @@
                     <path d="M14 19l2 2l4 -4" />
                     <path d="M9 8h4" />
                     <path d="M9 12h2" />
-                </svg>
-            </button>
-
-            <button class="icon-btn" id="play-ambientkBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path d="M7 4v16l13 -8l-13 -8" />
                 </svg>
             </button>
 
@@ -176,7 +168,7 @@
                             </button>
                         </div>
                         <div class="player-info">
-                            <span class="badge">NOW PLAYING</span>
+                            <span class="badge">REPRODUCIENDO</span>
                             <h2 id="song-title">404 Peace Not Found</h2>
                             <p id="song-artist">Low Signal</p>
                         </div>
@@ -304,13 +296,14 @@
             </svg>
         </button>
     </div>
-    <div id="ambientControls" class="ambient-controls">
-        </div>
+    <p class="ambient-subtitle">Mezcla sonidos y encuentra tu equilibrio</p>
+    <button id="ambientMasterPlay" class="ambient-master-play">▶ Reproducir mezcla</button>
+    <div id="ambientControls" class="ambient-controls"></div>
 </aside>
 
     <aside class="tasks-drawer" id="tasksDrawer">
         <div class="drawer-header">
-            <h3>Mis Tareas</h3>
+            <h3>Mis Notas</h3>
             <button id="closeTasks" class="close-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -318,14 +311,74 @@
                 </svg>
             </button>
         </div>
-        <div class="task-input">
-            <input type="text" id="taskInput" placeholder="Nueva tarea...">
-            <button id="addTask">Agregar</button>
+        <div class="notes-day-section">
+            <div class="day-title" id="selectedDayTitle">Hoy</div>
+            <div class="note-detail" id="noteDetail" hidden>
+                <div class="nd-top">
+                    <button type="button" id="ndBack" class="nd-back">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        Nota
+                    </button>
+                    <div class="nd-actions">
+                        <button type="button" id="ndDelete" class="nd-delete">Eliminar</button>
+                        <button type="button" id="ndSave" class="nd-save">Guardar</button>
+                    </div>
+                </div>
+                <textarea id="ndTitle" class="nd-title" placeholder="Escribe una nota..."></textarea>
+                <div class="nd-block nd-colors-row">
+                    <span class="nd-label">Color</span>
+                    <div class="nd-colors" id="ndColors"></div>
+                </div>
+                <div class="nd-block nd-row">
+                    <div class="nd-field">
+                        <span class="nd-label">Hora</span>
+                        <input type="time" id="ndTime" title="Hora para hacer la tarea">
+                        <span class="nd-hint" id="ndTimeHint"></span>
+                    </div>
+                    <div class="nd-field">
+                        <span class="nd-label">Avisar</span>
+                        <select id="ndLead" title="Cuándo avisarte">
+                            <option value="0">A la hora</option>
+                            <option value="5">5 min antes</option>
+                            <option value="10">10 min antes</option>
+                            <option value="15">15 min antes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="nd-block nd-under-row">
+                    <button type="button" id="ndUnderline" class="nd-underline" aria-pressed="false">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3v7a6 6 0 0 0 12 0V3"></path>
+                            <line x1="4" y1="21" x2="20" y2="21"></line>
+                        </svg>
+                        Subrayar
+                    </button>
+                </div>
+                <label class="nd-complete">
+                    <input type="checkbox" id="ndDone">
+                    <span>Marcar como completada</span>
+                </label>
+            </div>
+            <div class="board-wrap" id="boardWrap">
+                <p class="tasks-counter" id="noteCounter">0 de 0 completadas</p>
+                <p class="board-label">Pendientes del día</p>
+                <div class="board" id="tasksBoard"></div>
+            </div>
         </div>
-        <p class="tasks-counter">
-            Completadas: <span id="completedCount">0</span>
-        </p>
-        <ul id="tasksList"></ul>
+        <div class="notes-calendar">
+            <div class="calendar-head">
+                <button type="button" id="calendarPrev" class="cal-nav" aria-label="Mes anterior">‹</button>
+                <span id="calendarMonthLabel">Septiembre 2026</span>
+                <button type="button" id="calendarNext" class="cal-nav" aria-label="Mes siguiente">›</button>
+            </div>
+            <div class="calendar-weekdays">
+                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
     </aside>
 
     <div class="drawer-overlay" id="drawerOverlay"></div>
